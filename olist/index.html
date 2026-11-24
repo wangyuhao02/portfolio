@@ -151,7 +151,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .racebar{display:flex;align-items:center;gap:14px;margin:0 4px 6px}
 .racebar button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink);background:none;border:1px solid var(--rule);padding:6px 14px;cursor:pointer}
 .racebar button:hover{border-color:var(--cobalt);color:var(--cobalt)}
-.racebar .month{font-family:var(--mono);font-size:14px;color:var(--cobalt);letter-spacing:.08em}
+.race-month{font-family:var(--mono);font-size:20px;letter-spacing:.14em;color:var(--cobalt);text-align:center;line-height:1.2;margin:2px 0 4px}
 .legendnote{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
 @media (hover:hover){
   .kpi,.statcard,.concl>div,.actions>div,.bg-grid>div,td{transition:background-color .22s ease,box-shadow .24s ease,transform .24s ease}
@@ -486,9 +486,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
     <div class="chart-head"><h3>品类月度商品销售额排名</h3><span>2017-01—2018-08 · 万雷亚尔</span></div>
     <div class="racebar">
       <button id="raceBtn" type="button">播放</button>
-      <span class="month" id="monthLabel">2017-01</span>
-      <span class="legendnote">每 0.9 秒推进一个月</span>
+      <span class="legendnote">每 0.9 秒推进一个月，循环播放</span>
     </div>
+    <div class="race-month" id="monthLabel">2017-01</div>
     <div id="raceChart" class="chart chart--race" role="img" aria-label="品类月度销售额排名动画"></div>
     <p class="cap"><b>图 10</b> 前 8 个品类按当月商品销售额排序；数值为订单商品金额，不含运费。</p>
   </div>
@@ -1002,6 +1002,11 @@ var rfmData = rfmOrder.map(function(code){
   var d = D.rfm.filter(function(x){return x.code===code;})[0];
   return {name:rfmNames[code],value:d?d.share:0,itemStyle:{color:rfmColors[code]},code:code};
 });
+var rfmNarrow = window.innerWidth < 700;
+var rfmLegendFmt = function(name){
+  var item = rfmData.filter(function(d){return d.name===name;})[0];
+  return name + '  ' + (item ? item.value.toFixed(2) : '0.00') + '%';
+};
 init('rfmChart', {
   animation: !reduce,
   textStyle:{fontFamily:SANS},
@@ -1010,13 +1015,11 @@ init('rfmChart', {
     return '<b>'+p.name+'</b><br>客户 '+fmt(d.customers)+' 人<br>收入 R$ '+fmt(Math.round(d.revenue))+
       '<br>占比 '+pct(d.share)+'%';
   }}),
-  legend:{orient:'vertical',right:0,top:'middle',itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:11},
-    formatter:function(name){
-      var item = rfmData.filter(function(d){return d.name===name;})[0];
-      return name + '  ' + (item ? item.value.toFixed(2) : '0.00') + '%';
-    }},
+  legend: rfmNarrow
+    ? {orient:'horizontal',left:'center',bottom:0,itemWidth:12,itemHeight:12,itemGap:8,textStyle:{color:'#5F656B',fontSize:12,fontWeight:500},formatter:rfmLegendFmt}
+    : {orient:'vertical',right:0,top:'middle',itemWidth:13,itemHeight:13,itemGap:9,textStyle:{color:'#5F656B',fontSize:13,fontWeight:500},formatter:rfmLegendFmt},
   graphic:[],
-  series:[{type:'pie',radius:['44%','66%'],center:['34%','52%'],
+  series:[{type:'pie',radius:rfmNarrow?['38%','56%']:['44%','66%'],center:rfmNarrow?['50%','42%']:['34%','52%'],
     avoidLabelOverlap:true,minAngle:0,labelLayout:{hideOverlap:true},
     label:{formatter:function(p){ return p.value >= 3 ? p.value.toFixed(2)+'%' : ''; },color:'#5F656B',fontSize:11},
     labelLine:{length:8,length2:10,lineStyle:{color:'#C2C8CE'}},
@@ -1085,16 +1088,11 @@ if(document.getElementById('raceChart')){
   } else {
     var startRace = function(){
       if(raceTimer) return;
-      if(raceIdx >= raceMonths.length-1) raceIdx = 0;
       if(raceBtn) raceBtn.textContent='暂停';
       raceFrame(raceIdx);
       raceTimer = setInterval(function(){
-        if(raceIdx >= raceMonths.length-1){
-          clearInterval(raceTimer); raceTimer=null;
-          if(raceBtn) raceBtn.textContent='重播';
-          return;
-        }
-        raceIdx++; raceFrame(raceIdx);
+        raceIdx = (raceIdx + 1) % raceMonths.length;
+        raceFrame(raceIdx);
       },900);
     };
     var stopRace = function(){
