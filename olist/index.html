@@ -1073,7 +1073,7 @@ if(document.getElementById('raceChart')){
     textStyle:{fontFamily:SANS},
     grid:{left:8,right:96,top:8,bottom:8,containLabel:true},
     xAxis:{type:'value',max:'dataMax',axisLine:{show:false},axisTick:{show:false},
-      splitLine:{lineStyle:{color:'#E7EAED'}},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:11,formatter:function(v){return v>=10000?(v/10000).toFixed(0)+'万':v;}}},
+      splitLine:{lineStyle:{color:'#E7EAED'}},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:11,formatter:function(v){return v>=10000?(v/10000).toFixed(1)+'万':v;}}},
     yAxis:{type:'category',inverse:true,max:7,data:[],axisLine:{show:false},axisTick:{show:false},
       axisLabel:{color:'#232527',fontSize:13.5,fontFamily:SANS},animationDuration:800,animationDurationUpdate:800},
     series:[{type:'bar',barWidth:'55%',data:[],
