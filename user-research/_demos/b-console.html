@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 B · 夜间控制台 — 用户研究作品集</title>
+<style>
+:root{
+  --bg:#0B0C0E; --ink:#F1F2ED; --dim:#8A9097; --line:rgba(241,242,237,.14);
+  --lime:#C7FF3D; --panel:#14161A;
+  --sans:"Inter","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:100% 120px, calc(100% / 12) 100%;opacity:.35}
+a{color:inherit;text-decoration:none}
+.hud{position:fixed;inset:0 0 auto 0;height:58px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(18px,3vw,40px);border-bottom:1px solid var(--line);background:rgba(11,12,14,.86);
+  backdrop-filter:blur(10px);z-index:60;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim)}
+.hud .l{display:flex;gap:16px;align-items:center}
+.hud .live{width:6px;height:6px;background:var(--lime);border-radius:50%;box-shadow:0 0 10px var(--lime)}
+.hud .mid{flex:1;margin:0 26px;height:1px;background:var(--line);position:relative;overflow:hidden}
+.hud .mid i{position:absolute;inset:0;background:var(--lime);transform-origin:left;transform:scaleX(0)}
+.hud .r{color:var(--ink)}
+.rail{position:fixed;left:0;top:58px;bottom:0;width:56px;border-right:1px solid var(--line);z-index:40;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:30px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--dim);background:rgba(11,12,14,.6)}
+.rail span{writing-mode:vertical-rl}
+.rail .on{color:var(--lime)}
+main{position:relative;z-index:1;padding-left:56px}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(80px,10vh,120px) clamp(22px,5vw,72px) 60px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--dim);display:flex;gap:14px;align-items:center}
+.eyebrow b{color:var(--lime);font-weight:400}
+h1{margin:26px 0 0;font-size:clamp(3rem,9vw,8.4rem);line-height:.92;letter-spacing:-.045em;font-weight:800}
+h1 .out{color:transparent;-webkit-text-stroke:1px rgba(241,242,237,.55)}
+h1 .line{display:block;overflow:hidden;padding-bottom:.04em}
+h1 .line>span{display:block}
+.sub{display:flex;flex-wrap:wrap;gap:18px 34px;margin-top:40px;font-size:13px;color:var(--dim);max-width:900px}
+.sub b{color:var(--ink);font-weight:500}
+.hero .scroll{margin-top:56px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--dim);display:flex;gap:10px;align-items:center}
+.hero .scroll i{display:block;width:1px;height:34px;background:linear-gradient(var(--lime),transparent);animation:drop 1.8s infinite}
+@keyframes drop{0%{transform:scaleY(.2);transform-origin:top}60%{transform:scaleY(1);transform-origin:top}100%{transform:scaleY(.2);transform-origin:bottom}}
+
+.horizontal{position:relative;overflow-x:auto;border-bottom:1px solid var(--line)}
+.hz .horizontal{overflow:hidden}
+.track{display:flex;width:max-content;height:100vh;min-height:620px}
+.panel{width:min(78vw,980px);height:100%;padding:clamp(40px,6vh,72px) clamp(26px,5vw,72px);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;background:rgba(11,12,14,.55)}
+.panel .ph{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--dim)}
+.panel h2{margin:0;font-size:clamp(2rem,4.4vw,4.4rem);letter-spacing:-.035em;line-height:1;font-weight:700}
+.panel h2 em{display:block;font-style:normal;font-size:.34em;letter-spacing:.04em;color:var(--dim);margin-top:16px;font-weight:400}
+.panel .figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin-top:44px}
+.panel .fig small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--dim);margin-bottom:8px}
+.panel .fig b{font-size:clamp(1.5rem,3vw,2.6rem);font-weight:600;color:var(--lime);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.panel .fig p{margin:6px 0 0;font-size:11.5px;color:var(--dim);line-height:1.6}
+.panel .bar{height:2px;background:var(--line);margin-top:28px;position:relative}
+.panel .bar i{position:absolute;inset:0;background:var(--lime);transform-origin:left;}
+
+.problems{padding:clamp(70px,10vh,120px) clamp(22px,5vw,72px);border-bottom:1px solid var(--line)}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:44px}
+.sec-head h2{margin:0;font-size:clamp(1.6rem,2.8vw,2.6rem);letter-spacing:-.03em;font-weight:700}
+.sec-head p{margin:0;max-width:380px;font-size:12px;line-height:1.7;color:var(--dim)}
+.plist{border-top:1px solid var(--line)}
+.prow{display:grid;grid-template-columns:150px 1fr 70px;gap:22px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line);font-size:13px}
+.prow .lab{color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.prow .tr{height:4px;background:rgba(241,242,237,.07);position:relative;overflow:hidden}
+.prow .tr i{position:absolute;inset:0 auto 0 0;background:var(--lime);transform-origin:left;}
+.prow .v{text-align:right;font-family:var(--mono);font-size:12px;color:var(--lime)}
+.note{margin-top:26px;font-size:11px;color:var(--dim);line-height:1.7;max-width:720px}
+
+.foot{padding:40px clamp(22px,5vw,72px) 56px;display:flex;justify-content:space-between;gap:24px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--dim)}
+.badge{position:fixed;right:16px;bottom:16px;z-index:70;background:var(--lime);color:#0B0C0E;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:9px 11px;display:flex;gap:10px;align-items:center}
+.badge a{border-bottom:1px solid rgba(11,12,14,.4)}
+@media (max-width:900px){
+  .rail{display:none}
+  main{padding-left:0}
+  .track{height:auto;width:auto;flex-direction:column}
+  .panel{width:auto;height:auto;min-height:70vh;border-right:0;border-bottom:1px solid var(--line)}
+  .panel .figs{grid-template-columns:1fr 1fr}
+  .prow{grid-template-columns:96px 1fr 52px;gap:12px}
+  .sec-head{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){
+  .hero .scroll i{animation:none}
+  h1 .line>span{transform:none!important}
+}
+</style>
+</head>
+<body>
+<header class="hud">
+  <div class="l"><span class="live"></span><span>GARENA / RESEARCH ARCHIVE</span></div>
+  <div class="mid"><i id="prog"></i></div>
+  <div class="r"><span id="pct">000</span>%</div>
+</header>
+<aside class="rail" aria-hidden="true"><span class="on">01 竞品</span><span>02 产品</span><span>03 设计</span></aside>
+
+<main>
+  <section class="hero">
+    <div class="eyebrow"><b>FIELD ARCHIVE 2026</b><span>MARKET · PRODUCT · RESEARCH</span></div>
+    <h1>
+      <span class="line"><span>从市场</span></span>
+      <span class="line"><span class="out">到用户</span></span>
+    </h1>
+    <div class="sub">
+      <span><b>三份材料</b> 竞品研究 / 产品体验 / 研究设计</span>
+      <span><b>八个市场</b> 东南亚 · 拉美 · 台湾</span>
+      <span><b>1480 条评论</b> 2025.09 — 2026.11</span>
+    </div>
+    <div class="scroll"><i></i><span>SCROLL / 横向阅读三份材料</span></div>
+  </section>
+
+  <section class="horizontal" id="hz">
+    <div class="track" id="track">
+      <article class="panel">
+        <div class="ph"><span>01 / MARKET &amp; COMPETITORS</span><span>REPORT</span></div>
+        <div>
+          <h2>海外游戏市场<em>与射击赛道竞品研究</em></h2>
+          <div class="figs">
+            <div class="fig"><small>2025 全球市场</small><b>2016<em style="font-size:.5em"> 亿</em></b><p>美元，同比增长 9.1%</p></div>
+            <div class="fig"><small>手游占比</small><b>56<em style="font-size:.5em">%</em></b><p>1133 亿美元</p></div>
+            <div class="fig"><small>射击占畅销榜</small><b>2—5<em style="font-size:.5em"> 款</em></b><p>8 个市场前 50 名</p></div>
+          </div>
+          <div class="bar"><i style="--w:.7"></i></div>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="ph"><span>02 / PRODUCT EXPERIENCE</span><span>ANALYSIS</span></div>
+        <div>
+          <h2>射击产品<em>体验分析与设计</em></h2>
+          <div class="figs">
+            <div class="fig"><small>评论样本</small><b>1480<em style="font-size:.5em"> 条</em></b><p>五款产品，六个市场</p></div>
+            <div class="fig"><small>巴西 / 墨西哥</small><b>4.38 / 2.36</b><p>同一产品，评价相差两分</p></div>
+            <div class="fig"><small>主要问题</small><b>5<em style="font-size:.5em"> 类</em></b><p>性能 · 版本 · 外挂 · 匹配 · 账号</p></div>
+          </div>
+          <div class="bar"><i style="--w:.55"></i></div>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="ph"><span>03 / RESEARCH DESIGN</span><span>FRAMEWORK</span></div>
+        <div>
+          <h2>用户研究<em>设计与执行框架</em></h2>
+          <div class="figs">
+            <div class="fig"><small>研究模块</small><b>5<em style="font-size:.5em"> 个</em></b><p>区域 · 版本 · 留存 · 公平 · 监管</p></div>
+            <div class="fig"><small>方法</small><b>2<em style="font-size:.5em"> 类</em></b><p>问卷 + FGD</p></div>
+            <div class="fig"><small>执行周期</small><b>4<em style="font-size:.5em"> 周</em></b><p>设计 → 投放 → 访谈 → 报告</p></div>
+          </div>
+          <div class="bar"><i style="--w:.4"></i></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="problems">
+    <div class="sec-head">
+      <div><div class="eyebrow" style="margin-bottom:14px"><b>REVIEW SIGNAL</b><span>负面评论中的议题占比</span></div><h2>问题不在同一条线上</h2></div>
+      <p>P0 级问题随产品不同：PUBG 是性能，CODM 是版本与账号，Delta Force 是外挂与匹配。</p>
+    </div>
+    <div class="plist">
+      <div class="prow"><span class="lab">PUBG / ID 性能</span><span class="tr"><i data-w="24"></i></span><span class="v">24%</span></div>
+      <div class="prow"><span class="lab">CODM / PH 版本</span><span class="tr"><i data-w="40"></i></span><span class="v">40%</span></div>
+      <div class="prow"><span class="lab">CODM / ID 账号</span><span class="tr"><i data-w="20"></i></span><span class="v">20%</span></div>
+      <div class="prow"><span class="lab">DF / TW 外挂</span><span class="tr"><i data-w="16"></i></span><span class="v">16%</span></div>
+      <div class="prow"><span class="lab">DF / TW 匹配</span><span class="tr"><i data-w="14"></i></span><span class="v">14%</span></div>
+    </div>
+    <p class="note">样本为 2025 年 9 月至 2026 年 11 月的 App Store 评论，非随机抽样，写评论的用户偏负面；数字只用于产品之间、市场之间的相对比较。</p>
+  </section>
+
+  <footer class="foot"><span>王昱昊 · 兰州大学 · 2026</span><span>DEMO B / NIGHT CONSOLE</span></footer>
+</main>
+
+<div class="badge">方案 B · 夜间控制台 <a href="index.html">返回列表</a></div>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script>
+(function(){
+  var reduce = /static=1/.test(location.search) || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+  if(!reduce && window.Lenis){
+    var lenis = new Lenis({duration:1.05,smoothWheel:true});
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function(t){ lenis.raf(t*1000); });
+    gsap.ticker.lagSmoothing(0);
+    window.lenis = lenis;
+  }
+  gsap.utils.toArray('.panel .bar i').forEach(function(el){
+    var w = parseFloat(getComputedStyle(el).getPropertyValue('--w'))||0;
+    el.style.transform = 'scaleX(' + w + ')';
+  });
+  gsap.utils.toArray('.tr i').forEach(function(el){
+    var w = parseFloat(el.getAttribute('data-w'))||0;
+    el.style.transform = 'scaleX(' + (w/45) + ')';
+  });
+  if(reduce) return;
+
+  gsap.utils.toArray('h1 .line>span').forEach(function(el,i){
+    gsap.fromTo(el,{yPercent:110},{yPercent:0,duration:1.1,ease:'power4.out',delay:.1+i*.1});
+  });
+  gsap.from('.eyebrow, .sub, .scroll',{y:16,opacity:0,duration:.9,stagger:.09,delay:.3,ease:'power3.out'});
+  gsap.utils.toArray('.panel').forEach(function(p){
+    gsap.from(p.querySelectorAll('.fig'),{y:24,opacity:0,duration:.7,stagger:.08,
+      scrollTrigger:{trigger:p,start:'top 70%',once:true}});
+  });
+
+  var track = document.getElementById('track');
+  if(window.innerWidth > 900){
+    document.body.classList.add('hz');
+    var dist = function(){ return track.scrollWidth - window.innerWidth + 56; };
+    gsap.to(track,{x:function(){ return -dist(); },ease:'none',
+      scrollTrigger:{trigger:'#hz',start:'top top',end:function(){ return '+='+dist(); },
+        pin:true,scrub:1,invalidateOnRefresh:true}});
+  }
+
+  gsap.utils.toArray('.tr i').forEach(function(el){
+    var w = parseFloat(el.getAttribute('data-w'))||0;
+    gsap.from(el,{scaleX:0,duration:1.1,ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 90%',once:true}});
+  });
+  gsap.from('.prow',{y:12,opacity:0,duration:.5,stagger:.06,
+    scrollTrigger:{trigger:'.plist',start:'top 82%',once:true}});
+
+  gsap.utils.toArray('.panel .bar i').forEach(function(el){
+    gsap.from(el,{scaleX:0,duration:1.1,ease:'power3.out',
+      scrollTrigger:{trigger:el.closest('.panel'),start:'top 70%',once:true}});
+  });
+
+  var prog = document.getElementById('prog'), pct = document.getElementById('pct');
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var p = h>0 ? window.scrollY/h : 0;
+    gsap.set(prog,{scaleX:p});
+    pct.textContent = String(Math.round(p*100)).padStart(3,'0');
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>

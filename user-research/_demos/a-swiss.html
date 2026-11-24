@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 A · 瑞士索引 — 用户研究作品集</title>
+<style>
+:root{
+  --bg:#F4F5F6; --ink:#101113; --muted:#6B7076; --rule:#D7DADE;
+  --cobalt:#1F3BFF; --panel:#ECEEF0;
+  --sans:"Inter","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.top{position:fixed;inset:0 0 auto 0;height:56px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,3vw,44px);border-bottom:1px solid var(--rule);background:rgba(244,245,246,.9);
+  backdrop-filter:blur(12px);z-index:40;font-size:12px;letter-spacing:.06em}
+.top .l{display:flex;gap:14px;align-items:center}
+.top .dot{width:7px;height:7px;background:var(--cobalt);border-radius:50%}
+.top .r{font-family:var(--mono);color:var(--muted)}
+.rail{position:fixed;left:0;top:56px;bottom:0;width:64px;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:26px;z-index:30;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);background:var(--bg)}
+.rail span{writing-mode:vertical-rl}
+.rail .on{color:var(--cobalt)}
+.wrap{max-width:1320px;margin:0 auto;padding:0 clamp(28px,5vw,84px) 0 calc(64px + clamp(28px,5vw,84px))}
+.hero{padding-top:clamp(120px,14vh,190px);padding-bottom:clamp(60px,8vh,100px)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted);display:flex;gap:12px;align-items:center}
+.eyebrow b{color:var(--cobalt);font-weight:500}
+h1{margin:26px 0 0;font-size:clamp(2.9rem,7.6vw,7rem);line-height:.98;letter-spacing:-.035em;font-weight:700}
+h1 .line{display:block;overflow:hidden;padding-bottom:.06em}
+h1 .line>span{display:block}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:44px;
+  border-top:1px solid var(--ink);padding-top:16px;max-width:960px}
+.meta div{font-size:13px;line-height:1.5}
+.meta small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted);margin-bottom:6px}
+.lede{margin-top:42px;max-width:760px;font-size:clamp(15px,1.4vw,19px);line-height:1.8;color:#2A2C2F}
+.strip{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:34px 0}
+.strip .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(16px,3vw,48px)}
+.kpi small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.kpi b{font-size:clamp(2rem,3.6vw,3.4rem);font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi b em{font-style:normal;font-size:.42em;margin-left:4px;color:var(--muted);font-weight:500}
+.kpi p{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.6}
+.section{padding:clamp(70px,10vh,120px) 0;border-bottom:1px solid var(--rule)}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:44px}
+.sec-head h2{margin:0;font-size:clamp(1.5rem,2.6vw,2.4rem);letter-spacing:-.02em;font-weight:600}
+.sec-head p{margin:0;max-width:420px;font-size:13px;line-height:1.7;color:var(--muted)}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted)}
+.rows{border-top:1px solid var(--ink)}
+.row{display:grid;grid-template-columns:120px 1fr 64px;gap:24px;align-items:center;
+  padding:15px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.row .m{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.bar{height:8px;background:var(--panel);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--cobalt);transform-origin:left}
+.row .n{text-align:right;font-family:var(--mono);font-size:13px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.split>div{background:var(--bg);padding:clamp(24px,4vw,52px)}
+.split .big{font-size:clamp(3rem,6vw,5.6rem);letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.split .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);margin-bottom:18px}
+.split .low{color:var(--cobalt)}
+.split p{font-size:13px;line-height:1.7;color:var(--muted);margin:16px 0 0;max-width:340px}
+.index{border-top:1px solid var(--ink)}
+.item{display:grid;grid-template-columns:70px 1fr auto;gap:20px;align-items:center;padding:26px 0;border-bottom:1px solid var(--rule)}
+.item .num{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.item h3{margin:0;font-size:clamp(1.15rem,2vw,1.6rem);font-weight:600;letter-spacing:-.01em}
+.item p{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.item .arw{font-family:var(--mono);font-size:18px;color:var(--cobalt)}
+.foot{padding:44px 0 60px;display:flex;justify-content:space-between;gap:24px;font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.08em}
+.badge{position:fixed;right:18px;bottom:18px;z-index:50;background:var(--ink);color:#fff;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.badge a{color:#fff;border-bottom:1px solid rgba(255,255,255,.4)}
+@media (max-width:820px){
+  .rail{display:none}
+  .wrap{padding-left:clamp(20px,5vw,40px)}
+  .meta{grid-template-columns:1fr 1fr}
+  .strip .grid{grid-template-columns:1fr 1fr;row-gap:26px}
+  .row{grid-template-columns:84px 1fr 44px;gap:14px}
+  .split{grid-template-columns:1fr}
+  .sec-head{flex-direction:column;align-items:flex-start}
+  .item{grid-template-columns:44px 1fr auto}
+}
+@media (prefers-reduced-motion:reduce){
+  h1 .line>span,.bar i{transform:none!important}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="l"><span class="dot"></span><span>王昱昊 / 用户研究作品集</span></div>
+  <div class="r">2026 — 03 PIECES</div>
+</header>
+<aside class="rail" aria-hidden="true">
+  <span class="on">01 竞品研究</span><span>02 产品体验</span><span>03 用户研究设计</span>
+</aside>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow"><b>01</b><span>竞品研究 / MARKET &amp; COMPETITORS</span></div>
+    <h1>
+      <span class="line"><span>海外游戏市场</span></span>
+      <span class="line"><span>与射击赛道</span></span>
+      <span class="line"><span>竞品研究</span></span>
+    </h1>
+    <div class="meta">
+      <div><small>研究对象</small>Garena（Sea Limited 数字娱乐业务）</div>
+      <div><small>覆盖市场</small>印尼 · 泰国 · 菲律宾 · 越南 · 巴西 · 墨西哥 · 台湾 · 新加坡</div>
+      <div><small>数据读取</small>2026 年 11 月 21 日 / 公开资料</div>
+    </div>
+    <p class="lede">从市场总量到射击赛道，再到竞品位置。全部数字标注出处；公司披露与第三方估算分开处理；应用商店数据标注读取时间与地区。</p>
+  </section>
+
+  <section class="strip">
+    <div class="grid">
+      <div class="kpi"><small>2025 全球游戏市场</small><b data-count="2016">0</b><em>亿美元</em><p>同比增长 9.1%</p></div>
+      <div class="kpi"><small>手游占比</small><b data-count="56">0</b><em>%</em><p>1133 亿美元，仍是最大平台</p></div>
+      <div class="kpi"><small>评论样本</small><b data-count="1480">0</b><em>条</em><p>15 个产品与市场组合</p></div>
+      <div class="kpi"><small>射击占畅销榜</small><b data-count="5">0</b><em>款</em><p>8 个市场前 50 名中最多 5 款</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head">
+      <div>
+        <div class="tag">FIG. 01 — 市场结构</div>
+        <h2>8 个市场，射击只占 2 到 5 款</h2>
+      </div>
+      <p>取各市场 iOS 畅销榜（游戏类）前 50 名，记录射击产品的位置。位次是 2026 年 11 月 21 日的时点快照，不是市场份额。</p>
+    </div>
+    <div class="rows">
+      <div class="row"><span class="m">印尼</span><span class="bar"><i data-w="4"></i></span><span class="n">4</span></div>
+      <div class="row"><span class="m">泰国</span><span class="bar"><i data-w="4"></i></span><span class="n">4</span></div>
+      <div class="row"><span class="m">菲律宾</span><span class="bar"><i data-w="2"></i></span><span class="n">2</span></div>
+      <div class="row"><span class="m">越南</span><span class="bar"><i data-w="5"></i></span><span class="n">5</span></div>
+      <div class="row"><span class="m">巴西</span><span class="bar"><i data-w="3"></i></span><span class="n">3</span></div>
+      <div class="row"><span class="m">墨西哥</span><span class="bar"><i data-w="5"></i></span><span class="n">5</span></div>
+      <div class="row"><span class="m">台湾</span><span class="bar"><i data-w="3"></i></span><span class="n">3</span></div>
+      <div class="row"><span class="m">新加坡</span><span class="bar"><i data-w="2"></i></span><span class="n">2</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head">
+      <div>
+        <div class="tag">FIG. 02 — 区域反差</div>
+        <h2>同一款产品，两个市场</h2>
+      </div>
+      <p>Free Fire 近一年的评论样本：巴西 4.38 分、负面 12%；墨西哥 2.36 分、负面 64%。墨西哥同时是它 iOS 畅销榜第一的市场。</p>
+    </div>
+    <div class="split">
+      <div><div class="lbl">BRAZIL / 巴西</div><div class="big" data-count="4.38" data-dec="2">0</div><p>近一年评论均分，负面占 12%。</p></div>
+      <div><div class="lbl">MEXICO / 墨西哥</div><div class="big low" data-count="2.36" data-dec="2">0</div><p>近一年评论均分，负面占 64%；畅销榜第一。</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head">
+      <div>
+        <div class="tag">INDEX — 三份材料</div>
+        <h2>从市场判断，到产品体验，再到研究设计</h2>
+      </div>
+    </div>
+    <div class="index">
+      <div class="item"><span class="num">01</span><div><h3>海外游戏市场与射击赛道竞品研究</h3><p>市场总量 · 赛道边界 · 竞品位置 · 数据核验</p></div><span class="arw">→</span></div>
+      <div class="item"><span class="num">02</span><div><h3>射击产品体验分析与设计</h3><p>静态指标 · 1480 条评论 · 体验测试方案</p></div><span class="arw">→</span></div>
+      <div class="item"><span class="num">03</span><div><h3>Garena 用户研究设计</h3><p>五个研究模块 · 问卷框架 · FGD 框架</p></div><span class="arw">→</span></div>
+    </div>
+  </section>
+
+  <footer class="foot"><span>王昱昊 · 兰州大学 · 2026</span><span>DEMO A / SWISS INDEX</span></footer>
+</main>
+
+<div class="badge">方案 A · 瑞士索引 <a href="index.html">返回列表</a></div>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script>
+(function(){
+  var reduce = /static=1/.test(location.search) || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+  if(!reduce && window.Lenis){
+    var lenis = new Lenis({duration:1.05,smoothWheel:true});
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function(t){ lenis.raf(t*1000); });
+    gsap.ticker.lagSmoothing(0);
+    window.lenis = lenis;
+  }
+  gsap.utils.toArray('[data-count]').forEach(function(el){
+    el.textContent = parseFloat(el.getAttribute('data-count')).toFixed(parseInt(el.getAttribute('data-dec')||'0',10));
+  });
+  gsap.utils.toArray('.bar i').forEach(function(el){
+    var w = parseFloat(el.getAttribute('data-w'))||0;
+    el.style.transform = 'scaleX(' + (w/5) + ')';
+  });
+  if(reduce) return;
+
+  gsap.utils.toArray('h1 .line>span').forEach(function(el,i){
+    gsap.fromTo(el,{yPercent:112},{yPercent:0,duration:1.05,ease:'power4.out',delay:.12+i*.09});
+  });
+  gsap.from('.eyebrow, .meta, .lede',{y:18,opacity:0,duration:.9,stagger:.08,ease:'power3.out',delay:.25});
+
+  function count(el){
+    var target = parseFloat(el.getAttribute('data-count'));
+    var dec = parseInt(el.getAttribute('data-dec')||'0',10);
+    var obj = {v:0};
+    gsap.to(obj,{v:target,duration:1.6,ease:'power2.out',
+      onUpdate:function(){ el.textContent = obj.v.toFixed(dec); },
+      scrollTrigger:{trigger:el,start:'top 88%',once:true}});
+  }
+  gsap.utils.toArray('[data-count]').forEach(count);
+
+  gsap.utils.toArray('.bar i').forEach(function(el){
+    var w = parseFloat(el.getAttribute('data-w'))||0;
+    gsap.from(el,{scaleX:0,duration:1.1,ease:'power3.out',
+      scrollTrigger:{trigger:el.closest('.row'),start:'top 92%',once:true}});
+  });
+
+  gsap.from('.row',{y:14,opacity:0,duration:.5,stagger:.045,ease:'power2.out',
+    scrollTrigger:{trigger:'.rows',start:'top 82%',once:true}});
+  gsap.from('.split>div',{y:26,opacity:0,duration:.8,stagger:.1,ease:'power3.out',
+    scrollTrigger:{trigger:'.split',start:'top 82%',once:true}});
+  gsap.from('.item',{y:18,opacity:0,duration:.6,stagger:.08,ease:'power2.out',
+    scrollTrigger:{trigger:'.index',start:'top 84%',once:true}});
+})();
+</script>
+</body>
+</html>

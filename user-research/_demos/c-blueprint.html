@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 C · 技术图纸 — 用户研究作品集</title>
+<style>
+:root{
+  --bg:#071A2E; --bg2:#0A2440; --ink:#E7F1FF; --dim:#8FB0CC; --line:rgba(99,214,255,.26);
+  --cyan:#63D6FF; --warm:#FFB37A;
+  --sans:"Inter","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(99,214,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(99,214,255,.09) 1px,transparent 1px);
+  background-size:40px 40px}
+a{color:inherit;text-decoration:none}
+.frame{position:fixed;inset:14px;border:1px solid var(--line);z-index:50;pointer-events:none}
+.frame::before,.frame::after{content:"";position:absolute;width:14px;height:14px;border:1px solid var(--cyan)}
+.frame::before{left:-1px;top:-1px;border-right:0;border-bottom:0}
+.frame::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
+.hud{position:fixed;inset:14px 14px auto 14px;height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--dim);z-index:60;
+  border-bottom:1px solid var(--line);background:rgba(7,26,46,.82);backdrop-filter:blur(8px)}
+.hud b{color:var(--cyan);font-weight:400}
+main{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 clamp(26px,5vw,72px)}
+.hero{min-height:100vh;display:grid;grid-template-columns:1.5fr .8fr;gap:clamp(26px,5vw,70px);
+  align-items:center;padding:110px 0 50px}
+.hero .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--cyan);margin-bottom:26px}
+h1{margin:0;font-size:clamp(2.8rem,7vw,6.4rem);line-height:.96;letter-spacing:-.03em;font-weight:600}
+h1 .thin{font-weight:300;color:var(--dim)}
+h1 .num{display:block;font-family:var(--mono);font-size:.2em;letter-spacing:.3em;color:var(--cyan);margin-bottom:20px}
+.dim{display:flex;align-items:center;gap:12px;margin-top:34px;color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.14em}
+.dim .ln{flex:1;height:1px;background:var(--line);position:relative}
+.dim .ln::before,.dim .ln::after{content:"";position:absolute;top:-3px;width:1px;height:7px;background:var(--cyan)}
+.dim .ln::before{left:0}.dim .ln::after{right:0}
+.specs{border-left:1px solid var(--line);padding-left:clamp(18px,3vw,32px)}
+.specs div{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid rgba(99,214,255,.16);font-size:11.5px}
+.specs dt{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.specs dd{margin:0;color:var(--ink);line-height:1.5}
+.sheets{padding:clamp(60px,8vh,100px) 0;border-top:1px solid var(--line)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;gap:24px;margin-bottom:40px}
+.sheet-head h2{margin:0;font-size:clamp(1.4rem,2.4vw,2.1rem);font-weight:500;letter-spacing:-.01em}
+.sheet-head span{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--dim)}
+.sheet{position:relative;display:grid;grid-template-columns:88px 1fr 220px;gap:clamp(16px,3vw,40px);
+  padding:30px 0;border-top:1px solid var(--line);align-items:start}
+.sheet .no{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:.1em;padding-top:6px}
+.sheet h3{margin:0;font-size:clamp(1.2rem,2.1vw,1.75rem);font-weight:500;letter-spacing:-.01em}
+.sheet p{margin:10px 0 0;font-size:12.5px;line-height:1.7;color:var(--dim);max-width:640px}
+.sheet .metrics{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--dim);line-height:2;text-align:right}
+.sheet .metrics b{color:var(--ink);font-weight:400}
+.sheet .tick{position:absolute;left:-26px;top:36px;width:9px;height:9px;border:1px solid var(--cyan);transform:rotate(45deg)}
+.diagram{position:absolute;left:60px;top:0;bottom:0;width:1px;background:linear-gradient(var(--cyan),rgba(99,214,255,.05));opacity:.5}
+
+.panel{padding:clamp(60px,8vh,100px) 0;border-top:1px solid var(--line)}
+.panel .rowline{display:grid;grid-template-columns:190px 1fr 56px;gap:22px;align-items:center;padding:15px 0;border-bottom:1px solid rgba(99,214,255,.16)}
+.panel .rowline span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim)}
+.panel .track{height:5px;background:rgba(231,241,255,.07);position:relative;overflow:hidden}
+.panel .track i{position:absolute;inset:0 auto 0 0;background:var(--cyan);transform-origin:left;}
+.panel .val{text-align:right;font-family:var(--mono);font-size:11px;color:var(--cyan)}
+.panel .annotation{margin-top:28px;font-size:11px;line-height:1.7;color:var(--dim);max-width:720px;border-left:1px solid var(--line);padding-left:16px}
+
+.foot{padding:40px 0 60px;display:flex;justify-content:space-between;gap:20px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--dim)}
+.badge{position:fixed;right:24px;bottom:24px;z-index:70;background:var(--cyan);color:#071A2E;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;padding:9px 11px;display:flex;gap:10px;align-items:center}
+.badge a{border-bottom:1px solid rgba(7,26,46,.4)}
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;align-items:start;padding-top:96px;min-height:auto}
+  .specs{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}
+  .sheet{grid-template-columns:52px 1fr;gap:14px}
+  .sheet .metrics{grid-column:2;text-align:left}
+  .panel .rowline{grid-template-columns:120px 1fr 44px;gap:12px}
+  .frame{inset:8px}
+  .hud{inset:8px 8px auto 8px}
+}
+@media (prefers-reduced-motion:reduce){
+  h1 span{transform:none!important}
+}
+</style>
+</head>
+<body>
+<div class="frame" aria-hidden="true"></div>
+<header class="hud"><div>SHEET 00 / USER RESEARCH PORTFOLIO</div><div>SCALE 1:1 — ISSUED <b>2026.11.21</b></div></header>
+
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">DRAWING NO. UR-2026-03 / GARENA</div>
+      <h1>
+        <span class="num">01 — 03</span>
+        用户研究<span class="thin">作品集</span>
+      </h1>
+      <div class="dim"><span>FULL SET</span><span class="ln"></span><span>03 PIECES</span></div>
+    </div>
+    <aside class="specs">
+      <div><dt>Object</dt><dd>Garena，Sea Limited 数字娱乐业务</dd></div>
+      <div><dt>Scope</dt><dd>海外游戏市场 / 射击赛道 / 竞品与用户</dd></div>
+      <div><dt>Data</dt><dd>公开资料与 App Store 公开页面</dd></div>
+      <div><dt>Read</dt><dd>2026 年 11 月 21 日</dd></div>
+      <div><dt>Sheets</dt><dd>竞品研究 · 产品体验 · 研究设计</dd></div>
+    </aside>
+  </section>
+
+  <section class="sheets">
+    <div class="sheet-head"><h2>图纸目录 / DRAWING LIST</h2><span>03 SHEETS — READ IN ORDER</span></div>
+    <div class="diagram" aria-hidden="true"></div>
+    <article class="sheet">
+      <span class="tick"></span><div class="no">S-01</div>
+      <div><h3>海外游戏市场与射击赛道竞品研究</h3><p>从市场总量到赛道边界，再到竞品位置。所有数字标注出处，公司披露与第三方估算分开处理。</p></div>
+      <div class="metrics">2016 亿美元 全球市场<br>2—5 款 射击占榜<br><b>12 页 / 6 表</b></div>
+    </article>
+    <article class="sheet">
+      <span class="tick"></span><div class="no">S-02</div>
+      <div><h3>射击产品体验分析与设计</h3><p>五款产品的静态指标与 1480 条评论，按产品与市场拆解；后附体验测试方案。</p></div>
+      <div class="metrics">1480 条 评论样本<br>4.38 / 2.36 巴西与墨西哥<br><b>8 页 / 3 表</b></div>
+    </article>
+    <article class="sheet">
+      <span class="tick"></span><div class="no">S-03</div>
+      <div><h3>Garena 用户研究设计</h3><p>五个研究模块，配问卷与 FGD 框架；给出样本、指标、执行顺序与边界。</p></div>
+      <div class="metrics">5 个 研究模块<br>2 类 方法<br><b>7 页 / 4 表</b></div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="sheet-head"><h2>关键读数 / KEY READINGS</h2><span>REVIEW SIGNAL — NEGATIVE SHARE</span></div>
+    <div class="rowline"><span>PUBG / 印尼 性能</span><span class="track"><i data-w="24"></i></span><span class="val">24%</span></div>
+    <div class="rowline"><span>CODM / 菲律宾 版本</span><span class="track"><i data-w="40"></i></span><span class="val">40%</span></div>
+    <div class="rowline"><span>CODM / 印尼 账号</span><span class="track"><i data-w="20"></i></span><span class="val">20%</span></div>
+    <div class="rowline"><span>Delta Force / 台湾 外挂</span><span class="track"><i data-w="16"></i></span><span class="val">16%</span></div>
+    <div class="rowline"><span>Delta Force / 台湾 匹配</span><span class="track"><i data-w="14"></i></span><span class="val">14%</span></div>
+    <p class="annotation">样本为 2025 年 9 月至 2026 年 11 月的 App Store 评论，非随机抽样，写评论的用户偏负面；数字用于相对比较，不代表满意度分布。</p>
+  </section>
+
+  <footer class="foot"><span>王昱昊 · 兰州大学 · 2026</span><span>DEMO C / TECHNICAL DRAWING</span></footer>
+</main>
+
+<div class="badge">方案 C · 技术图纸 <a href="index.html">返回列表</a></div>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script>
+(function(){
+  var reduce = /static=1/.test(location.search) || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+  if(!reduce && window.Lenis){
+    var lenis = new Lenis({duration:1.05,smoothWheel:true});
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function(t){ lenis.raf(t*1000); });
+    gsap.ticker.lagSmoothing(0);
+    window.lenis = lenis;
+  }
+  gsap.utils.toArray('.track i').forEach(function(el){
+    var w = parseFloat(el.getAttribute('data-w'))||0;
+    el.style.transform = 'scaleX(' + (w/45) + ')';
+  });
+  if(reduce) return;
+
+  gsap.from('h1',{y:26,opacity:0,duration:1.1,ease:'power3.out'});
+  gsap.from('.specs div',{y:14,opacity:0,duration:.6,stagger:.07,delay:.35,ease:'power2.out'});
+  gsap.from('.dim',{opacity:0,duration:.8,delay:.6});
+
+  gsap.utils.toArray('.sheet').forEach(function(s,i){
+    gsap.from(s,{y:30,opacity:0,duration:.7,ease:'power2.out',
+      scrollTrigger:{trigger:s,start:'top 86%',once:true}});
+  });
+
+  gsap.utils.toArray('.track i').forEach(function(el){
+    var w = parseFloat(el.getAttribute('data-w'))||0;
+    gsap.from(el,{scaleX:0,duration:1.1,ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 90%',once:true}});
+  });
+})();
+</script>
+</body>
+</html>

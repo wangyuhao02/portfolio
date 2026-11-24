@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>电商订单履约与商业价值分析 · 王昱昊</title>
+<meta name="description" content="基于 Olist 巴西电商公开数据的履约、评价、地区、卖家、运费、RFM 与品类分析。">
+<meta name="theme-color" content="#F4F5F6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23101113'/%3E%3Cpath d='M6 8 10.5 24 16 12 21.5 24 26 8' fill='none' stroke='%23F4F5F6' stroke-width='2.4'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F4F5F6; --ink:#101113; --body:#232527; --muted:#5F656B; --rule:#D3D7DB;
+  --cobalt:#1F3BFF; --red:#C2412C; --slate:#2E454E; --panel:#E9ECEF; --paper:#FFFFFF;
+  --green:#1E7B4F; --amber:#B7791F;
+  --sans:"Inter","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--sans);font-size:17px;line-height:1.8;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.top{position:fixed;inset:0 0 auto 0;height:64px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,3vw,44px);border-bottom:1px solid var(--rule);background:rgba(244,245,246,.92);
+  backdrop-filter:blur(12px);z-index:60;overflow:hidden}
+.brand{display:flex;gap:14px;align-items:center;font-size:14px;letter-spacing:.02em}
+.brand .dot{width:8px;height:8px;background:var(--cobalt);border-radius:50%}
+.pnav{display:flex;align-items:center;gap:18px}
+.pcurrent{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);white-space:nowrap;text-align:right;min-width:118px}
+.ptrack{position:relative;display:flex;align-items:center;justify-content:space-between;width:200px;height:18px}
+.ptrack::before{content:"";position:absolute;left:6px;right:6px;top:50%;height:3px;background:var(--rule);transform:translateY(-50%)}
+.pfill{position:absolute;left:6px;top:50%;height:3px;background:var(--cobalt);transform:translateY(-50%);width:0;border-radius:2px}
+.pdot{position:relative;z-index:1;width:12px;height:12px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pdot i{display:block;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--rule);background:var(--bg);
+  transition:width .2s,height .2s,background-color .2s,border-color .2s,box-shadow .2s}
+.pdot.done i{background:var(--cobalt);border-color:var(--cobalt)}
+.pdot.on i{width:12px;height:12px;border-color:var(--cobalt);background:var(--cobalt);box-shadow:0 0 0 4px rgba(31,59,255,.13)}
+.pdot:hover i{border-color:var(--cobalt)}
+.rp{position:absolute;border-radius:50%;background:var(--cobalt);opacity:.14;pointer-events:none;
+  transform:scale(0);animation:rp .62s cubic-bezier(.2,.7,.2,1) forwards;z-index:0}
+.top .brand,.top .pnav{position:relative;z-index:1}
+@keyframes rp{to{transform:scale(1);opacity:0}}
+.rail{position:fixed;left:0;top:64px;bottom:0;width:120px;border-right:1px solid var(--rule);z-index:40;
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;padding-left:18px;background:var(--bg);
+  font-family:var(--mono);font-size:12.5px;line-height:1.5;letter-spacing:.02em;color:var(--muted)}
+.rail span{display:block;white-space:nowrap;writing-mode:horizontal-tb}
+.rail .on{color:var(--cobalt);font-weight:600}
+.wrap{max-width:1280px;margin:0 auto;padding:0 clamp(24px,4vw,72px) 0 calc(120px + clamp(24px,4vw,72px))}
+.hero{padding-top:clamp(124px,15vh,180px);padding-bottom:clamp(34px,5vh,60px)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--muted);display:flex;gap:14px;align-items:center}
+.eyebrow b{color:var(--cobalt);font-weight:500}
+h1{margin:26px 0 0;font-size:clamp(3rem,6.6vw,6.2rem);line-height:1.04;letter-spacing:-.035em;font-weight:700}
+h1 .line{display:block;overflow:hidden;padding-bottom:.08em}
+h1 .line>span{display:block}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:40px;
+  border-top:1px solid var(--ink);padding-top:18px;max-width:1040px}
+.meta div{font-size:15.5px;line-height:1.6}
+.meta small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.lede{margin-top:34px;max-width:860px;font-size:clamp(17px,1.5vw,19.5px);line-height:1.9;color:var(--body)}
+.strip{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:clamp(20px,3vh,30px) 0}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(14px,2vw,30px)}
+.kpi{padding:6px 0}
+.kpi small{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+.kpi b{font-size:clamp(1.9rem,3vw,2.9rem);font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05}
+.kpi b em{font-style:normal;font-size:.4em;margin-left:4px;color:var(--muted);font-weight:500;letter-spacing:0}
+.kpi p{margin:6px 0 0;font-size:13px;color:var(--muted);line-height:1.55}
+.spark{height:30px;margin-top:8px}
+.spark svg{display:block;width:100%;height:30px}
+.section{padding:clamp(72px,10vh,118px) 0;border-bottom:1px solid var(--rule)}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:28px;margin-bottom:42px}
+.sec-head h2{margin:0;font-size:clamp(1.9rem,3.4vw,3rem);letter-spacing:-.025em;font-weight:600;line-height:1.25}
+.sec-head .lead{margin:0;max-width:440px;font-size:15.5px;line-height:1.8;color:var(--muted)}
+.tag{font-family:var(--mono);font-size:14px;letter-spacing:.12em;color:var(--muted);margin-bottom:14px}
+.blocktitle{display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin:40px 0 14px}
+.blocktitle h3{margin:0;font-size:clamp(1.2rem,1.9vw,1.5rem);font-weight:600;letter-spacing:-.01em}
+.blocktitle span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+p{margin:0 0 16px;color:var(--body)}
+.note{font-size:14px;line-height:1.75;color:var(--muted);max-width:860px}
+.bg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0 8px}
+.bg-grid div{background:var(--bg);padding:20px}
+.bg-grid small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.bg-grid b{font-size:1.35rem;font-weight:600;font-variant-numeric:tabular-nums}
+.bg-grid p{font-size:13.5px;margin:6px 0 0;color:var(--muted)}
+.table-wrap{overflow-x:auto;border:1px solid var(--rule);background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:15.5px}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;font-weight:500;color:var(--muted);background:var(--panel);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cap{font-family:var(--sans);font-size:14px;line-height:1.7;letter-spacing:0;color:var(--muted);margin:12px 0 0;text-align:center}
+.cap b{font-family:var(--mono);font-size:12px;color:var(--ink);font-weight:500;margin-right:6px}
+.chartbox{border:1px solid var(--rule);background:var(--paper);padding:16px 14px 8px;min-width:0}
+.chart-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin:0 4px 4px}
+.chart-head h3{margin:0;font-size:16px;font-weight:600}
+.chart-head span{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--muted);white-space:nowrap}
+.chart{width:100%;height:340px}
+.chart--tall{height:400px}
+.chart--heat{height:224px}
+.chart--gauge{height:232px}
+.donut-wrap{position:relative}
+.donut-center{position:absolute;left:34%;top:52%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-center b{display:block;font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.donut-center small{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap}
+.chart--race{height:420px}
+.grid-2{display:grid;grid-template-columns:1.35fr .9fr;gap:20px;align-items:start;margin-top:20px}
+.grid-2.equal{grid-template-columns:1fr 1fr}
+.dash-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-bottom:20px}
+.dash-kpis>div{background:var(--bg);padding:18px}
+.dash-kpis small{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+.dash-kpis b{font-size:clamp(1.6rem,2.5vw,2.3rem);font-weight:600;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
+.dash-kpis b em{font-style:normal;font-size:.4em;color:var(--muted);margin-left:4px;font-weight:500}
+.dash-kpis p{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.dash-panel{border:1px solid var(--rule);background:var(--paper);padding:14px 14px 10px;min-width:0}
+.dash-panel .chart{height:210px}
+.dash-link{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;color:var(--cobalt);margin-top:4px;border-bottom:1px solid transparent}
+.dash-link:hover{border-bottom-color:var(--cobalt)}
+.jump-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:22px}
+.jump-card{display:block;background:var(--bg);padding:18px;transition:background-color .2s,box-shadow .2s}
+.jump-card:hover{background:#EDF1FF;box-shadow:inset 3px 0 0 var(--cobalt)}
+.jump-card small{font-family:var(--mono);font-size:11px;letter-spacing:.07em;color:var(--muted)}
+.jump-card h4{margin:8px 0 6px;font-size:1rem;font-weight:600}
+.jump-card p{margin:0 0 10px;font-size:13px;line-height:1.65;color:var(--muted)}
+.jump-card span{font-family:var(--mono);font-size:11px;color:var(--cobalt)}
+.statrow{display:grid;grid-template-columns:.85fr .85fr 1.3fr;gap:20px;margin-bottom:20px}
+.statcard{border:1px solid var(--rule);background:var(--paper);padding:18px;min-width:0}
+.statcard .lbl{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.ring{position:relative;width:190px;height:190px;margin:0 auto}
+.ring svg{width:190px;height:190px;display:block}
+.ring-track{fill:none;stroke:var(--panel);stroke-width:12}
+.ring-val{fill:none;stroke:var(--cobalt);stroke-width:12;stroke-linecap:butt}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.ring-center b{font-size:2.3rem;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ring-center b em{font-style:normal;font-size:.4em;color:var(--muted);margin-left:2px}
+.ring-center small{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin-top:8px}
+.bigstat{font-size:clamp(2.6rem,4vw,3.6rem);font-weight:600;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;margin:10px 0 6px}
+.bigstat em{font-style:normal;font-size:.36em;color:var(--muted);margin-left:5px}
+.statcard p{font-size:13.5px;margin:8px 0 0;color:var(--muted)}
+.concl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:34px}
+.concl>div{background:var(--bg);padding:clamp(20px,2.6vw,30px)}
+.concl b{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--cobalt);margin-bottom:10px}
+.concl p{margin:0;font-size:15.5px;line-height:1.78}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:24px}
+.actions>div{background:var(--bg);padding:clamp(20px,2.4vw,28px)}
+.actions b{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--cobalt);margin-bottom:8px}
+.actions h4{margin:0 0 6px;font-size:1.02rem;font-weight:600}
+.actions p{margin:0;font-size:14.5px;line-height:1.75;color:var(--muted)}
+.readlink{display:inline-flex;align-items:center;gap:10px;margin-top:26px;border-bottom:1px solid var(--ink);padding-bottom:4px;font-size:14.5px}
+.readlink span{font-family:var(--mono);font-size:11.5px;color:var(--cobalt)}
+.foot{padding:46px 0 70px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px 24px;font-size:12.5px;color:var(--muted);font-family:var(--mono);letter-spacing:.05em}
+.racebar{display:flex;align-items:center;gap:14px;margin:0 4px 6px}
+.racebar button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink);background:none;border:1px solid var(--rule);padding:6px 14px;cursor:pointer}
+.racebar button:hover{border-color:var(--cobalt);color:var(--cobalt)}
+.racebar .month{font-family:var(--mono);font-size:14px;color:var(--cobalt);letter-spacing:.08em}
+.legendnote{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+@media (hover:hover){
+  .kpi,.statcard,.concl>div,.actions>div,.bg-grid>div,td{transition:background-color .22s ease,box-shadow .24s ease,transform .24s ease}
+  .kpi:hover,.statcard:hover,.concl>div:hover,.actions>div:hover,.bg-grid>div:hover{background:#EDF1FF;box-shadow:inset 3px 0 0 var(--cobalt),0 12px 28px rgba(16,17,19,.07);transform:scale(1.12)!important;z-index:2}
+  tbody tr:hover{background:#EDF1FF;transform:scale(1.02)!important}
+  .kpi,.statcard,.concl>div,.actions>div{position:relative}
+  .kpi::before,.statcard::before,.concl>div::before,.actions>div::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%),rgba(31,59,255,.09),transparent 62%);transition:opacity .3s ease}
+  .kpi:hover::before,.statcard:hover::before,.concl>div:hover::before,.actions>div:hover::before{opacity:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .kpi:hover,.statcard:hover,.concl>div:hover,.actions>div:hover,.bg-grid>div:hover,tbody tr:hover{transform:none!important;box-shadow:none!important}
+  .kpi::before,.statcard::before,.concl>div::before,.actions>div::before{display:none}
+}
+@media (hover:hover) and (min-width:961px){
+  .table-wrap{overflow:hidden;overflow:clip}
+}
+@media (max-height:900px){
+  .hero{padding-top:clamp(96px,12vh,140px);padding-bottom:20px}
+  .hero .meta{margin-top:30px}
+  .hero .lede{margin-top:24px}
+  .strip{padding:16px 0}
+}
+@media (max-height:760px){
+  .hero{min-height:100vh;min-height:100svh}
+  .rail{gap:8px;font-size:12px}
+}
+@media (max-width:1200px){
+  .pcurrent{display:none}
+  .ptrack{width:180px}
+}
+@media (max-width:1100px){
+  .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:22px}
+  .bg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash-kpis{grid-template-columns:1fr 1fr}
+  .dash-grid{grid-template-columns:1fr}
+  .jump-grid{grid-template-columns:1fr 1fr}
+  .statrow{grid-template-columns:1fr 1fr}
+  .statrow .wide{grid-column:1/-1}
+  .grid-2,.grid-2.equal{grid-template-columns:1fr}
+}
+@media (max-width:960px){
+  .rail{display:none}
+  .wrap{padding-left:clamp(20px,5vw,40px)}
+  .pnav{display:none}
+  .meta{grid-template-columns:1fr;gap:14px}
+  .sec-head{flex-direction:column;align-items:flex-start}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .statrow{grid-template-columns:1fr}
+  .concl{grid-template-columns:1fr}
+  .actions{grid-template-columns:1fr}
+  .jump-grid{grid-template-columns:1fr}
+  .bg-grid{grid-template-columns:1fr}
+  h1{font-size:clamp(2.6rem,8vw,4rem)}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="dot"></span><span>王昱昊 / 个人作品集</span></div>
+  <nav class="pnav" aria-label="章节进度">
+    <span class="pcurrent" id="pcurrent">01 背景与数据来源</span>
+    <span class="ptrack" id="ptrack">
+      <i class="pfill" id="pfill"></i>
+      <a class="pdot" href="#s1" title="背景与口径" aria-label="背景与口径"><i></i></a>
+      <a class="pdot" href="#s4" title="履约与评价" aria-label="履约与评价"><i></i></a>
+      <a class="pdot" href="#s5" title="地区与卖家" aria-label="地区与卖家"><i></i></a>
+      <a class="pdot" href="#s6" title="运费与客户" aria-label="运费与客户"><i></i></a>
+      <a class="pdot" href="#s7" title="品类与结论" aria-label="品类与结论"><i></i></a>
+    </span>
+  </nav>
+</header>
+<aside class="rail" aria-hidden="true"><span data-for="s1" class="on">01 背景</span><span data-for="s2">02 总览</span><span data-for="s3">03 口径</span><span data-for="s4">04 履约</span><span data-for="s5">05 地区卖家</span><span data-for="s6">06 运费客户</span><span data-for="s7">07 品类</span><span data-for="s8">08 结论</span></aside>
+
+<main class="wrap">
+<section class="hero">
+  <div class="eyebrow"><b>DATA ANALYSIS / OLIST</b><span>2016—2018</span></div>
+  <h1>
+    <span class="line"><span>电商订单履约</span></span>
+    <span class="line"><span>与商业价值分析</span></span>
+  </h1>
+  <div class="meta">
+    <div><small>作者</small>王昱昊　兰州大学</div>
+    <div><small>数据</small>Olist Brazilian E-Commerce Public Dataset</div>
+    <div><small>窗口</small>2016-09—2018-08 · 20 个完整月</div>
+  </div>
+  <p class="lede">一份基于 98,205 笔有效订单的履约分析。先交代数据来源与统一口径，再依次回答三个问题：延迟对评价的代价有多大，哪些地区和卖家在拉低履约，客户结构与品类经营下一步该做什么。所有图表使用同一套口径；月度品类与日订单分布在原始表上按相同规则补充汇总。</p>
+</section>
+
+<section class="strip">
+  <div class="kpi-grid">
+    <div class="kpi"><small>有效订单</small><b data-count="98205">98,205</b><em>单</em><p>排除已取消与不可用订单</p><div class="spark" id="sparkOrders" aria-hidden="true"></div></div>
+    <div class="kpi"><small>有效订单收入</small><b data-count="1573.9" data-dec="1">1,573.9</b><em>万</em><p>按订单汇总 · 单位雷亚尔</p><div class="spark" id="sparkRevenue" aria-hidden="true"></div></div>
+    <div class="kpi"><small>平均履约</small><b data-count="12.09" data-dec="2">12.09</b><em>天</em><p>签收时间减下单时间</p></div>
+    <div class="kpi"><small>准时率</small><b data-count="93.23" data-dec="2">93.23</b><em>%</em><p>96,469 笔可判断时效订单</p></div>
+    <div class="kpi"><small>差评率</small><b data-count="12.81" data-dec="2">12.81</b><em>%</em><p>95,822 条有评价订单</p><div class="spark" id="sparkBad" aria-hidden="true"></div></div>
+  </div>
+</section>
+
+<section class="section" id="s1">
+  <div class="sec-head">
+    <div><div class="tag">01 / CONTEXT</div><h2>背景与数据来源</h2></div>
+    <p class="lead">Olist 是巴西的电商平台与卖家服务商，数据来自其公开数据集（Olist Brazilian E-Commerce Public Dataset，Kaggle）。数据集覆盖 2016 年 9 月至 2018 年 8 月的订单、商品、支付、评价、客户与卖家信息，共 9 张表。</p>
+  </div>
+  <div class="bg-grid reveal">
+    <div><small>原始订单</small><b>99,441</b><p>成功导入 99,400 条，缺失约 0.04%</p></div>
+    <div><small>有效订单</small><b>98,205</b><p>排除 canceled 与 unavailable</p></div>
+    <div><small>已送达订单</small><b>96,469</b><p>其中 96,469 笔可判断时效</p></div>
+    <div><small>完整月份</small><b>20</b><p>2017-01—2018-08 进入月度趋势</p></div>
+  </div>
+  <p>本页围绕履约展开：下单到签收的时效、延迟与评价的关系、地区与卖家差异、运费与客户结构、品类经营。收入、订单量、客户、评价都先统一口径，再做分组，避免同一指标在不同表里算出不同答案。</p>
+  <p>分析在 MySQL 中完成：9 张 CSV 导入后建订单底表与明细表，按业务问题写查询，DataGrip 执行并导出 9 份结果表；报告与看板由同一批结果生成。订单编号无重复，客户表导入 99,440 条，缺失约 0.001%。</p>
+  <p class="note">边界：公开历史数据，结论为描述性分析；缺少流量、广告、成本、利润与退款字段，不能推断广告投入产出（ROI）、利润或完整转化漏斗。缺失签收或预计送达时间的订单不进入准时率计算。</p>
+  <a class="readlink" href="./Olist电商履约分析报告.docx"><span>DOCX</span>阅读完整报告（含数据核验与结论边界）</a>
+</section>
+
+<section class="section" id="s2">
+  <div class="sec-head">
+    <div><div class="tag">02 / DASHBOARD</div><h2>数据总览</h2></div>
+    <p class="lead">9 份结果表按业务问题合并为四个部分。下面的数字和图是全篇入口，也可以直接跳到任一部分。</p>
+  </div>
+
+  <div class="dash-kpis reveal">
+    <div><small>平均履约</small><b>12.09<em>天</em></b><p>签收减下单，96,469 笔已送达订单</p></div>
+    <div><small>延迟率</small><b>6.77<em>%</em></b><p>延迟天数大于 0 的订单占比</p></div>
+    <div><small>新客户收入占比</small><b>97.02<em>%</em></b><p>按真实客户编号首次购买划分</p></div>
+    <div><small>高价值流失风险客户</small><b>8,529<em>人</em></b><p>贡献 16.99% 收入，平均 334.1 天未复购</p></div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-panel reveal">
+      <div class="chart-head"><h3>月度收入与延迟率</h3><span>2017-01—2018-08</span></div>
+      <div id="dashTrend" class="chart" role="img" aria-label="月度收入与延迟率"></div>
+      <a class="dash-link" href="#s4">履约与评价 →</a>
+    </div>
+    <div class="dash-panel reveal">
+      <div class="chart-head"><h3>延迟程度与差评率</h3><span>按延迟天数分组</span></div>
+      <div id="dashDelay" class="chart" role="img" aria-label="延迟程度与差评率"></div>
+      <a class="dash-link" href="#s4">履约与评价 →</a>
+    </div>
+    <div class="dash-panel reveal">
+      <div class="chart-head"><h3>地区延迟率前 5</h3><span>订单量 300 笔以上</span></div>
+      <div id="dashState" class="chart" role="img" aria-label="地区延迟率前五"></div>
+      <a class="dash-link" href="#s5">地区与卖家 →</a>
+    </div>
+    <div class="dash-panel reveal">
+      <div class="chart-head"><h3>RFM 收入结构</h3><span>R 最近购买 / F 频率 / M 金额</span></div>
+      <div id="dashRfm" class="chart" role="img" aria-label="RFM 收入结构"></div>
+      <a class="dash-link" href="#s6">运费与客户 →</a>
+    </div>
+  </div>
+
+  <div class="jump-grid">
+    <a class="jump-card" href="#s4"><small>结果表 01—02</small><h4>履约与评价</h4><p>月度趋势、延迟分级与评价损失</p><span>查看分析 →</span></a>
+    <a class="jump-card" href="#s5"><small>结果表 03—05</small><h4>地区与卖家</h4><p>客户地区、卖家表现与卖家地区</p><span>查看分析 →</span></a>
+    <a class="jump-card" href="#s6"><small>结果表 06—08</small><h4>运费与客户</h4><p>运费分组、RFM 分层与新老客户</p><span>查看分析 →</span></a>
+    <a class="jump-card" href="#s7"><small>结果表 09</small><h4>商品与品类</h4><p>品类销售额、月度排名与份额</p><span>查看分析 →</span></a>
+  </div>
+  <p class="note" style="margin-top:18px">核心判断：延迟是评价的主要风险；地区、卖家与运费差异说明履约存在运营分层。先处理严重延迟，再做卖家、区域、客户与品类的分层运营。</p>
+</section>
+
+<section class="section" id="s3">
+  <div class="sec-head">
+    <div><div class="tag">03 / DEFINITIONS</div><h2>分析口径</h2></div>
+    <p class="lead">同一指标在不同表里有不同算法。先把口径固定，后面所有数字才对得上。</p>
+  </div>
+  <div class="table-wrap reveal">
+    <table>
+      <thead><tr><th style="width:16%">口径</th><th>规则</th><th style="width:26%">解决什么问题</th></tr></thead>
+      <tbody>
+        <tr><td>时间</td><td>所有月度、趋势与时间分析统一使用下单时间（<b>order_purchase_timestamp</b>），不使用支付、发货或签收时间归月。</td><td>保证月度之间可比</td></tr>
+        <tr><td>有效订单</td><td>排除已取消（<b>canceled</b>）与不可用（<b>unavailable</b>）；底表保留全部记录，用有效订单标记（<b>is_valid_order</b>）标记，后续可按业务问题重新筛选。</td><td>经营与客户分析的分母</td></tr>
+        <tr><td>履约订单</td><td>只用已送达（<b>delivered</b>）且实际签收时间非空的订单，以已送达标记（<b>is_delivered_order = 1</b>）筛选。</td><td>准时率、延迟率、履约天数</td></tr>
+        <tr><td>收入</td><td>支付金额（<b>payment_value</b>）先按订单编号（<b>order_id</b>）汇总，再关联订单；商品金额与运费单独留在商品明细口径。收入单位为巴西雷亚尔（R$）。</td><td>避免多次支付重复计收入</td></tr>
+        <tr><td>订单量</td><td>订单底表按订单编号去重计数（<b>COUNT(DISTINCT order_id)</b>），不用商品、支付或评价明细的行数。</td><td>避免多商品、多支付放大订单量</td></tr>
+        <tr><td>客户</td><td>客户数用真实客户编号（<b>customer_unique_id</b>）统计；客户编号（<b>customer_id</b>）只用于订单与客户表关联。</td><td>新老客、复购与 RFM 不重复计人</td></tr>
+        <tr><td>履约与延迟</td><td>履约天数 = 签收 − 下单；延迟天数 = 签收 − 预计送达。延迟天数 &gt; 0 为延迟，≥ 7 天为严重延迟；缺任一时间不参与准时率。</td><td>统一时效判定</td></tr>
+        <tr><td>评价</td><td>一单多条评价时，按评价与回复时间排序只取最新一条；1—2 分为差评，分母只含有评价订单；卖家评价只用单卖家订单。</td><td>避免评价重复与归因错误</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">口径对应三个分母：经营 98,205 笔有效订单、履约 96,469 笔已送达订单、评价 95,822 条有评价订单。</p>
+</section>
+
+<section class="section" id="s4">
+  <div class="sec-head">
+    <div><div class="tag">04 / DELIVERY &amp; REVIEWS</div><h2>履约与评价</h2></div>
+    <p class="lead">96,469 笔已送达订单中，6.77% 延迟。延迟 7 天以上的订单只有 2,862 笔，却贡献了最集中的差评。</p>
+  </div>
+
+  <div class="statrow reveal">
+    <div class="statcard">
+      <div class="lbl">准时率 / ON-TIME</div>
+      <div class="ring">
+        <svg viewBox="0 0 220 220" role="img" aria-label="准时率 93.23%">
+          <circle class="ring-track" cx="110" cy="110" r="86"/>
+          <circle class="ring-val" id="ringVal" cx="110" cy="110" r="86" stroke-dasharray="540.35" stroke-dashoffset="540.35" transform="rotate(-90 110 110)"/>
+        </svg>
+        <div class="ring-center"><b><span data-ring="93.23">93.23</span><em>%</em></b><small>89,935 笔准时</small></div>
+      </div>
+      <p>96,469 笔可判断时效的已送达订单</p>
+    </div>
+    <div class="statcard">
+      <div class="lbl">差评率 / BAD REVIEWS</div>
+      <div id="gaugeBad" class="chart chart--gauge" role="img" aria-label="差评率 12.81%"></div>
+      <p>1—2 星占 95,822 条有评价订单</p>
+    </div>
+    <div class="statcard wide">
+      <div class="lbl">严重延迟 / ≥ 7 DAYS</div>
+      <div class="bigstat" data-count="2862">2,862<em>笔</em></div>
+      <div class="bigstat" style="font-size:clamp(2rem,3vw,2.7rem);color:var(--red)">79.29<em>% 差评率</em></div>
+      <p>延迟 7 天以上的订单平均评分 1.70；准时订单为 4.29。按 2,862 笔计，约每 100 笔严重延迟带来 79 条差评。</p>
+    </div>
+  </div>
+
+  <div class="chartbox reveal">
+    <div class="chart-head"><h3>延迟程度与评价</h3><span>按延迟天数分组</span></div>
+    <div id="delayChart" class="chart" role="img" aria-label="不同延迟天数的差评率与平均评分"></div>
+    <p class="cap"><b>图 1</b> 差评率随时长上升，平均评分随时长下降；悬停查看订单量与评价样本。</p>
+  </div>
+
+  <div class="chartbox reveal" style="margin-top:20px">
+    <div class="chart-head"><h3>月度收入、延迟率与差评率</h3><span>2017-01—2018-08</span></div>
+    <div id="monthlyChart" class="chart chart--tall" role="img" aria-label="月度收入、延迟率与差评率趋势"></div>
+    <p class="cap"><b>图 2</b> 点击图例可隐藏系列并重缩放坐标轴；滚轮缩放，底部缩略条拖动平移。</p>
+  </div>
+
+  <div class="chartbox reveal" style="margin-top:20px">
+    <div class="chart-head"><h3>每日有效订单</h3><span>2017-01—2018-08</span></div>
+    <div id="heatChart" class="chart chart--heat" role="img" aria-label="每日有效订单热力日历"></div>
+    <p class="cap"><b>图 3</b> 颜色按当日订单量分五级；2017-11-24 为窗口内最高，1,166 单。</p>
+  </div>
+
+  <div class="concl">
+    <div><b>判断 01</b><p>延迟 7 天以上订单平均评分 1.70，比准时订单低 2.59 分；差评率 79.29%，高 70.02 个百分点。延迟越重，评价损失不是线性增加，而是集中在尾部。</p></div>
+    <div><b>判断 02</b><p>2018-03 延迟率 18.96%，是 20 个月最高；2018-04 回落到 4.50%，2018-06 降到 1.16%。峰值可以压回，关键是当月是否提前识别并调配运力。</p></div>
+    <div><b>判断 03</b><p>2017-11-24 单日 1,166 单，为窗口最高；随后 2017-11、2017-12 延迟率 12.40%、7.46%。大促前需要按预测单量预留运力，而不是等到延迟率抬头。</p></div>
+  </div>
+</section>
+
+<section class="section" id="s5">
+  <div class="sec-head">
+    <div><div class="tag">05 / REGIONS &amp; SELLERS</div><h2>地区与卖家</h2></div>
+    <p class="lead">订单量最大的 SP 圣保罗延迟率 4.49%；订单量 411 的 AL 阿拉戈斯延迟率 21.41%。看比例也要看规模，两者放同一张图才有优先级。</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="chartbox reveal">
+      <div class="chart-head"><h3>地区订单量与延迟率</h3><span>订单量前 10 · 点击切换右侧</span></div>
+      <div id="stateChart" class="chart" role="img" aria-label="地区订单量与延迟率"></div>
+      <p class="cap"><b>图 4</b> 柱长为有效订单量，颜色按延迟率由钴蓝到砖红；悬停查看履约天数与差评率。</p>
+    </div>
+    <div class="chartbox reveal">
+      <div class="chart-head"><h3 id="stateLineTitle">SP 圣保罗 · 月度延迟率</h3><span>与全站 6.77% 对照</span></div>
+      <div id="stateLine" class="chart" role="img" aria-label="所选地区的月度延迟率"></div>
+      <p class="cap"><b>图 5</b> 点击左侧任意地区，本图切换到该地区；虚线为全站延迟率。</p>
+    </div>
+  </div>
+
+  <div class="grid-2 equal" style="margin-top:20px">
+    <div class="chartbox reveal">
+      <div class="chart-head"><h3>SP 圣保罗 / AL 阿拉戈斯</h3><span>四项指标 · 0—100</span></div>
+      <div id="radarChart" class="chart" role="img" aria-label="SP 与 AL 履约画像雷达图"></div>
+      <p class="cap"><b>图 6</b> 准时率、履约速度、评价表现、订单规模；订单规模按对数归一。</p>
+    </div>
+    <div class="chartbox reveal">
+      <div class="chart-head"><h3>延迟率最高的卖家</h3><span>单卖家订单 · 20 笔以上</span></div>
+      <div class="table-wrap" style="border:0">
+        <table style="min-width:0">
+          <thead><tr><th>卖家</th><th>州</th><th>订单</th><th>延迟率</th><th>差评率</th></tr></thead>
+          <tbody>
+            <tr><td>ad781527</td><td>SP 圣保罗</td><td class="num">33</td><td class="num">36.36%</td><td class="num">33.33%</td></tr>
+            <tr><td>821fb029</td><td>SP 圣保罗</td><td class="num">24</td><td class="num">33.33%</td><td class="num">30.43%</td></tr>
+            <tr><td>ede0c036</td><td>SP 圣保罗</td><td class="num">43</td><td class="num">32.56%</td><td class="num">28.57%</td></tr>
+            <tr><td>54965bbe</td><td>PR 巴拉那</td><td class="num">72</td><td class="num">30.56%</td><td class="num">39.71%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap"><b>表 1</b> 卖家 ID 截取前 8 位；样本量有限，名单用于复核，不按比例直接处罚。</p>
+    </div>
+  </div>
+
+  <div class="concl">
+    <div><b>判断 01</b><p>AL 阿拉戈斯、MA 马拉尼昂、SE 塞尔希培延迟率 21.41%、17.43%、15.22%，均高于全站 6.77%；三地合计约 1,492 笔订单，占有效订单 1.5%，适合先做承运与时效承诺复盘。</p></div>
+    <div><b>判断 02</b><p>SP 圣保罗以 41,125 笔订单贡献 41.9% 订单量，延迟率 4.49%；改善重点不是比例，而是绝对延迟单数约 1,847 笔。比例低但体量大，仍然值得单独设阈值。</p></div>
+    <div><b>判断 03</b><p>单卖家订单里，延迟率 30% 以上的问题卖家订单量多在 20—72 笔，其中 72 单卖家差评率 39.71%。小样本卖家要同时看订单量、延迟率与差评率，避免被比例误导。</p></div>
+  </div>
+</section>
+
+<section class="section" id="s6">
+  <div class="sec-head">
+    <div><div class="tag">06 / FREIGHT &amp; CUSTOMERS</div><h2>运费与客户</h2></div>
+    <p class="lead">运费分组与履约表现同向变化，但高运费同时代表远距离、大件与区域运力，不能直接解释为运费导致延迟。客户部分用 RFM（最近一次购买 Recency、购买频率 Frequency、消费金额 Monetary）分层。</p>
+  </div>
+
+  <div class="grid-2 equal">
+    <div class="chartbox reveal">
+      <div class="chart-head"><h3>运费分组与履约</h3><span>按商品运费四分位</span></div>
+      <div id="freightChart" class="chart" role="img" aria-label="运费分组的延迟率、差评率与平均履约天数"></div>
+      <p class="cap"><b>图 7</b> 高运费订单平均履约 15.22 天，低运费 7.99 天；悬停查看订单量。</p>
+    </div>
+    <div class="chartbox reveal">
+      <div class="chart-head"><h3>RFM 客户分层与收入贡献</h3><span>94,989 位真实客户</span></div>
+      <div class="donut-wrap">
+        <div id="rfmChart" class="chart" role="img" aria-label="RFM 客户分层的收入占比"></div>
+        <div class="donut-center"><b>R$ 1,573.9 万</b><small>有效订单收入</small></div>
+      </div>
+      <p class="cap"><b>图 8</b> RFM 按最近一次购买（R）、购买频率（F）、消费金额（M）五等分打分；一般成长客户贡献 44.63% 收入，高价值流失风险客户 8,529 人贡献 16.99%。</p>
+    </div>
+  </div>
+
+  <div class="chartbox reveal" style="margin-top:20px">
+    <div class="chart-head"><h3>新老客户贡献</h3><span>按真实客户编号（customer_unique_id）首次购买划分</span></div>
+    <div id="contribChart" class="chart" style="height:210px" role="img" aria-label="新老客户订单与收入占比"></div>
+    <p class="cap"><b>图 9</b> 新客户贡献 96.73% 订单与 97.02% 收入；老客户客单价 145.76，低于新客户 160.76。</p>
+  </div>
+
+  <div class="concl">
+    <div><b>判断 01</b><p>高运费订单延迟率 8.25%、差评率 19.94%，分别是低运费订单的 1.74 倍和 2.07 倍；平均履约 15.22 天对 7.99 天。运费与体验相关，但原因需要继续拆到距离、件型与区域运力。</p></div>
+    <div><b>判断 02</b><p>一般成长客户 50,983 人贡献 44.63% 收入；高价值流失风险客户 8,529 人贡献 16.99%，平均 334.1 天未复购，是召回优先级最高的一层。</p></div>
+    <div><b>判断 03</b><p>新客户订单占 96.73%、收入占 97.02%；老客户仅 3.27% 订单、2.98% 收入。复购率低，首购后 90 天内的二次转化是主要空间。</p></div>
+  </div>
+</section>
+
+<section class="section" id="s7">
+  <div class="sec-head">
+    <div><div class="tag">07 / CATEGORY</div><h2>商品与品类</h2></div>
+    <p class="lead">2017-01 至 2018-08，健康美容与手表礼品在 20 个月里各领先 10 个月。品类排名不是固定的，库存与履约监控要按月更新。</p>
+  </div>
+
+  <div class="chartbox reveal">
+    <div class="chart-head"><h3>品类月度商品销售额排名</h3><span>2017-01—2018-08 · 万雷亚尔</span></div>
+    <div class="racebar">
+      <button id="raceBtn" type="button">播放</button>
+      <span class="month" id="monthLabel">2017-01</span>
+      <span class="legendnote">每 0.9 秒推进一个月</span>
+    </div>
+    <div id="raceChart" class="chart chart--race" role="img" aria-label="品类月度销售额排名动画"></div>
+    <p class="cap"><b>图 10</b> 前 8 个品类按当月商品销售额排序；数值为订单商品金额，不含运费。</p>
+  </div>
+
+  <div class="blocktitle"><h3>全期品类份额</h3><span>2016-09—2018-08 · 商品销售额</span></div>
+  <div class="table-wrap reveal">
+    <table>
+      <thead><tr><th>品类</th><th>商品销售额</th><th>收入占比</th><th>有效订单</th><th>经营判断</th></tr></thead>
+      <tbody>
+        <tr><td>健康美容</td><td class="num">R$ 1,255,695</td><td class="num">9.31%</td><td class="num">8,986</td><td>第一大品类，单独监控履约与差评</td></tr>
+        <tr><td>手表礼品</td><td class="num">R$ 1,198,185</td><td class="num">8.88%</td><td class="num">5,779</td><td>客单价高，节日波动大</td></tr>
+        <tr><td>床品家纺</td><td class="num">R$ 1,035,964</td><td class="num">7.68%</td><td class="num">10,142</td><td>订单量最大，履约压力集中</td></tr>
+        <tr><td>运动休闲</td><td class="num">R$ 979,741</td><td class="num">7.26%</td><td class="num">7,811</td><td>稳定头部，适合做复购</td></tr>
+        <tr><td>电脑配件</td><td class="num">R$ 904,322</td><td class="num">6.70%</td><td class="num">6,852</td><td>件型差异大，运费敏感</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concl">
+    <div><b>判断 01</b><p>全期看，健康美容 9.31%、手表礼品 8.88%、床品家纺 7.68% 是前三大品类，合计 25.87% 商品销售额。对这三个品类单独设履约与差评监控，比全品类平均更能发现问题。</p></div>
+    <div><b>判断 02</b><p>前两名在 20 个月里各领先 10 个月；健康美容单月最高 12.05 万雷亚尔（2018-08），手表礼品最高 12.39 万（2018-05）。排名按季节与促销切换，备货与运力不能按固定名次安排。</p></div>
+    <div><b>判断 03</b><p>床品家纺订单 10,142 笔、销售额 103.6 万，订单量高于前两名但客单价更低。它更像履约密集型品类，优先看时效与破损，而不是只追销售额。</p></div>
+  </div>
+</section>
+
+<section class="section" id="s8">
+  <div class="sec-head">
+    <div><div class="tag">08 / ACTIONS</div><h2>结论与建议</h2></div>
+    <p class="lead">结论只对本批公开数据成立。动作按预警、分层、优化的顺序排。</p>
+  </div>
+  <div class="actions">
+    <div><b>01 / 运营</b><h4>月度履约预警</h4><p>周度看板同时盯延迟率、严重延迟率与差评率，起始阈值建议 8%、3%、13%。对预计送达前 2 天仍未发货的订单提前干预。</p></div>
+    <div><b>02 / 商家运营</b><h4>卖家分层治理</h4><p>月度评分卡同时看订单量、延迟率、差评率与取消率，样本门槛 20 单。连续两月延迟率超过 20% 进入整改，超过 30% 限制流量。</p></div>
+    <div><b>03 / 物流</b><h4>区域与承运配置</h4><p>对 AL 阿拉戈斯、MA 马拉尼昂、SE 塞尔希培做州—承运商矩阵，比较准时率、运费与覆盖；按实际时效重设承诺日期，减少假性延迟。</p></div>
+    <div><b>04 / 物流与定价</b><h4>拆开运费与距离</h4><p>把高运费订单拆成跨州、大件、重货三类，分别测试前置仓与运费补贴；用延迟率和差评率评估，不只看运费成本。</p></div>
+    <div><b>05 / 客户运营</b><h4>按 90 天复购窗口运营</h4><p>8,529 名高价值流失风险客户优先召回，新客首购后 7 天与 30 天两次触达。目标把老客户订单占比从 3.27% 提到 5%。</p></div>
+    <div><b>06 / 品类运营</b><h4>头部品类单独监控</h4><p>健康美容、手表礼品、床品家纺单独设时效与包装标准；按月复盘延迟率、破损与差评，排名变化时同步调整库存与运力。</p></div>
+  </div>
+  <p class="note" style="margin-top:22px">以上阈值为起始值，需要按公司目标、客单价与承运合同校准；地区与卖家差异不代表因果。后续可补 90 天复购、履约阶段拆分、同州与跨州比较、评价文本分析。</p>
+  <a class="readlink" href="./Olist电商履约分析_汇总与看板.xlsx"><span>XLSX</span>查看汇总与看板（9 类分析明细）</a>
+</section>
+
+<footer class="foot">
+  <span>数据：Olist Brazilian E-Commerce Public Dataset</span>
+  <span>个人作品集，不代表任何公司观点</span>
+  <span>wangyuhao0202@126.com</span>
+</footer>
+</main>
+
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/ScrollTrigger.min.js"></script>
+<script src="assets/vendor/SplitText.min.js"></script>
+<script src="assets/vendor/lenis.min.js"></script>
+<script src="assets/vendor/echarts.min.js"></script>
+<script src="assets/data.js"></script>
+<script>
+(function(){
+'use strict';
+var reduce = /static=1/.test(location.search) || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var D = window.OLIST_DATA || {};
+var C = {cobalt:'#1F3BFF', red:'#C2412C', slate:'#2E454E', muted:'#8A9299', green:'#1E7B4F', amber:'#B7791F'};
+var MONO = 'IBM Plex Mono, Consolas, monospace';
+var SANS = 'Inter, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif';
+var CAT = {health_beauty:'健康美容', watches_gifts:'手表礼品', bed_bath_table:'床品家纺', sports_leisure:'运动休闲', computers_accessories:'电脑配件', furniture_decor:'家具装饰', housewares:'家居用品', cool_stuff:'酷玩礼品'};
+var ST = {SP:'圣保罗',RJ:'里约热内卢',MG:'米纳斯吉拉斯',RS:'南里奥格兰德',PR:'巴拉那',SC:'圣卡塔琳娜',BA:'巴伊亚',DF:'联邦区',ES:'圣埃斯皮里图',GO:'戈亚斯',AL:'阿拉戈斯',MA:'马拉尼昂',SE:'塞尔希培',PI:'皮奥伊',CE:'塞阿拉'};
+var CATCOL = {'health_beauty':'#1F3BFF','watches_gifts':'#4A66FF','bed_bath_table':'#7C8BFF','sports_leisure':'#2E454E','computers_accessories':'#5E7783','furniture_decor':'#6E5BD6','housewares':'#8A9299','cool_stuff':'#C9D3DF'};
+var rfmNames = {'1':'核心高价值','2':'高价值流失风险','3':'新客或潜力','4':'低价值沉睡','5':'一般成长'};
+var rfmColors = {'1':'#101113','2':'#C2412C','3':'#5A74FF','4':'#D3D7DB','5':'#1F3BFF'};
+
+function fmt(n){ return Number(n).toLocaleString('en-US'); }
+function pct(n){ return Number(n).toFixed(2); }
+function wan(n){ return (Number(n)/10000).toFixed(1); }
+function comma(s){ return s.replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+/* ---------- motion ---------- */
+if(window.gsap && window.ScrollTrigger){
+  gsap.registerPlugin(ScrollTrigger);
+  if(window.SplitText) gsap.registerPlugin(SplitText);
+}
+var lenis = null;
+if(!reduce && window.Lenis && window.gsap){
+  lenis = new Lenis({duration:1.05, smoothWheel:true});
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add(function(t){ lenis.raf(t*1000); });
+  gsap.ticker.lagSmoothing(0);
+  window.lenis = lenis;
+}
+
+var topbar = document.querySelector('.top');
+if(!reduce && topbar){
+  topbar.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('.nav a') : null;
+    if(!a) return;
+    var tr = topbar.getBoundingClientRect(), ar = a.getBoundingClientRect();
+    var x = e.clientX || (ar.left + ar.width/2);
+    var y = e.clientY || (ar.top + ar.height/2);
+    var d = Math.max(ar.width, 64) * 2;
+    var s = document.createElement('span');
+    s.className = 'rp';
+    s.style.width = s.style.height = d + 'px';
+    s.style.left = (x - tr.left - d/2) + 'px';
+    s.style.top = (y - tr.top - d/2) + 'px';
+    topbar.appendChild(s);
+    setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); }, 640);
+  });
+}
+document.addEventListener('click', function(e){
+  var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+  if(!a) return;
+  var id = a.getAttribute('href');
+  if(!id || id === '#') return;
+  var el = document.querySelector(id);
+  if(!el) return;
+  e.preventDefault();
+  if(lenis) lenis.scrollTo(el, {offset:-72, duration:1.1});
+  else el.scrollIntoView();
+});
+
+if(!reduce && window.gsap){
+  gsap.utils.toArray('h1 .line>span').forEach(function(el,i){
+    gsap.fromTo(el,{yPercent:112},{yPercent:0,duration:1.05,ease:'power4.out',delay:.08+i*.09});
+  });
+  gsap.from('.eyebrow, .meta, .lede',{y:16,opacity:0,duration:.85,stagger:.08,ease:'power3.out',delay:.2});
+  if(window.SplitText){
+    gsap.utils.toArray('.sec-head h2').forEach(function(el){
+      var split = SplitText.create(el,{type:'lines',mask:'lines'});
+      gsap.from(split.lines,{yPercent:110,duration:.9,ease:'power3.out',stagger:.07,
+        scrollTrigger:{trigger:el,start:'top 88%',once:true}});
+    });
+  }
+  gsap.utils.toArray('.reveal').forEach(function(el){
+    gsap.from(el,{y:18,opacity:0,duration:.7,ease:'power2.out',
+      scrollTrigger:{trigger:el,start:'top 93%',once:true}});
+  });
+}
+
+/* counters */
+document.querySelectorAll('[data-count]').forEach(function(el){
+  var target = parseFloat(el.getAttribute('data-count'));
+  var dec = parseInt(el.getAttribute('data-dec')||'0',10);
+  if(reduce || !window.gsap){ el.textContent = comma(target.toFixed(dec)); return; }
+  el.textContent = '0';
+  var obj = {v:0};
+  gsap.to(obj,{v:target,duration:1.5,ease:'power2.out',
+    scrollTrigger:{trigger:el,start:'top 92%',once:true},
+    onUpdate:function(){ el.textContent = comma(obj.v.toFixed(dec)); }});
+});
+
+/* ring */
+var RING_C = 2 * Math.PI * 86;
+var ringEl = document.getElementById('ringVal');
+var ringNum = document.querySelector('[data-ring]');
+if(ringEl){
+  var ringOffset = RING_C * (1 - 0.9323);
+  if(reduce || !window.gsap){
+    ringEl.style.strokeDashoffset = ringOffset;
+    if(ringNum) ringNum.textContent = '93.23';
+  } else {
+    gsap.to(ringEl,{strokeDashoffset:ringOffset,duration:1.5,ease:'power2.out',
+      scrollTrigger:{trigger:'.ring',start:'top 82%',once:true}});
+    if(ringNum){
+      ringNum.textContent = '0';
+      var ro = {v:0};
+      gsap.to(ro,{v:93.23,duration:1.5,ease:'power2.out',
+        scrollTrigger:{trigger:'.ring',start:'top 82%',once:true},
+        onUpdate:function(){ ringNum.textContent = ro.v.toFixed(2); }});
+    }
+  }
+}
+
+/* sparklines */
+function spark(id, vals, invert){
+  var el = document.getElementById(id);
+  if(!el || !vals || vals.length < 2) return;
+  var w = 120, h = 30, pad = 3;
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  var span = (max - min) || 1;
+  var pts = vals.map(function(v,i){
+    return [pad + i*(w-2*pad)/(vals.length-1), h-pad-((v-min)/span)*(h-2*pad)];
+  });
+  var d = pts.map(function(p,i){ return (i?'L':'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+  var up = vals[vals.length-1] >= vals[0];
+  var col = invert ? (up ? C.red : C.green) : (up ? C.green : C.red);
+  var last = pts[pts.length-1];
+  el.innerHTML = '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+
+    '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.4" vector-effect="non-scaling-stroke"/>'+
+    '<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="2.4" fill="'+col+'"/></svg>';
+}
+if(D.monthly){
+  spark('sparkOrders', D.monthly.map(function(m){return m.orders;}), false);
+  spark('sparkRevenue', D.monthly.map(function(m){return m.revenue;}), false);
+  spark('sparkBad', D.monthly.map(function(m){return m.bad;}), true);
+}
+
+/* ---------- echarts ---------- */
+var charts = [];
+function init(id, option){
+  var el = document.getElementById(id);
+  if(!el || !window.echarts) return null;
+  var ch = echarts.init(el, null, {renderer:'svg'});
+  ch.setOption(option);
+  charts.push(ch);
+  return ch;
+}
+function tip(extra){
+  return Object.assign({
+    backgroundColor:'#FFFFFF', borderColor:'#D3D7DB', borderWidth:1, padding:[10,12],
+    textStyle:{color:'#232527', fontFamily:SANS, fontSize:13},
+    extraCssText:'box-shadow:0 10px 28px rgba(16,17,19,.10);border-radius:2px;'
+  }, extra||{});
+}
+function monoAxis(extra){
+  return Object.assign({
+    axisLine:{lineStyle:{color:'#D3D7DB'}}, axisTick:{show:false},
+    axisLabel:{color:'#5F656B', fontFamily:MONO, fontSize:11},
+    splitLine:{lineStyle:{color:'#E7EAED'}}
+  }, extra||{});
+}
+function lateColor(v){
+  var t = Math.max(0, Math.min(1, v/22));
+  return 'rgb(' + Math.round(31+(194-31)*t) + ',' + Math.round(59+(65-59)*t) + ',' + Math.round(255+(44-255)*t) + ')';
+}
+
+/* dashboard */
+init('dashTrend', {
+  animation:!reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:4,right:6,top:24,bottom:2,containLabel:true},
+  tooltip:tip({trigger:'axis',formatter:function(ps){
+    var d = D.monthly[ps[0].dataIndex];
+    return '<b>'+d.m+'</b><br>收入 R$ '+fmt(Math.round(d.revenue))+'<br>延迟率 '+pct(d.late)+'%';
+  }}),
+  legend:{right:0,top:0,itemWidth:8,itemHeight:8,textStyle:{color:'#5F656B',fontSize:10}},
+  xAxis:{type:'category',data:D.monthly.map(function(m){return m.m;}),axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,interval:4},axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false}},
+  yAxis:[
+    {type:'value',axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,formatter:function(v){return (v/10000).toFixed(0)+'万';}},splitLine:{lineStyle:{color:'#EEF1F3'}},axisLine:{show:false}},
+    {type:'value',axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,formatter:'{value}%'},splitLine:{show:false},axisLine:{show:false}}
+  ],
+  series:[
+    {name:'收入',type:'line',symbol:'none',data:D.monthly.map(function(m){return m.revenue;}),lineStyle:{width:1.8,color:C.cobalt},
+      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(31,59,255,.18)'},{offset:1,color:'rgba(31,59,255,0)'}])}},
+    {name:'延迟率',type:'line',yAxisIndex:1,symbol:'none',data:D.monthly.map(function(m){return m.late;}),lineStyle:{width:1.6,color:C.red}}
+  ]
+});
+
+init('dashDelay', {
+  animation:!reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:4,right:6,top:20,bottom:2,containLabel:true},
+  tooltip:tip({trigger:'axis',formatter:function(ps){
+    var d = D.delay[ps[0].dataIndex];
+    return '<b>'+delayNames[ps[0].dataIndex]+'</b><br>订单 '+fmt(d.orders)+' 笔<br>差评率 '+pct(d.bad)+'% · 评分 '+d.score.toFixed(2);
+  }}),
+  xAxis:{type:'category',data:['准时','1–3 天','4–7 天','≥7 天'],axisLabel:{color:'#5F656B',fontSize:10,interval:0},axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false}},
+  yAxis:{type:'value',max:100,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,formatter:'{value}%'},splitLine:{lineStyle:{color:'#EEF1F3'}},axisLine:{show:false}},
+  series:[{type:'bar',barWidth:'44%',data:D.delay.map(function(d){return d.bad;}),itemStyle:{color:C.cobalt},
+    label:{show:true,position:'top',formatter:'{c}%',color:'#5F656B',fontFamily:MONO,fontSize:10}}]
+});
+
+var dashPool = (D.states||[]).concat(D.stateExtra||[]);
+var dashSeen = {};
+var dashStates = dashPool.filter(function(s){ if(s.orders < 300 || dashSeen[s.s]) return false; dashSeen[s.s]=1; return true; })
+  .sort(function(a,b){ return b.late - a.late; }).slice(0,5);
+init('dashState', {
+  animation:!reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:4,right:44,top:8,bottom:2,containLabel:true},
+  tooltip:tip({trigger:'item',formatter:function(p){
+    var s = dashStates[p.dataIndex];
+    return '<b>'+s.s+' '+ST[s.s]+'</b><br>延迟率 '+pct(s.late)+'%<br>订单 '+fmt(s.orders)+' 笔<br>平均履约 '+s.days.toFixed(2)+' 天';
+  }}),
+  xAxis:{type:'value',max:25,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,formatter:'{value}%'},splitLine:{lineStyle:{color:'#EEF1F3'}},axisLine:{show:false}},
+  yAxis:{type:'category',inverse:true,data:dashStates.map(function(s){return s.s+' '+ST[s.s];}),axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#232527',fontFamily:MONO,fontSize:10}},
+  series:[{type:'bar',barWidth:'52%',data:dashStates.map(function(s){return {value:s.late,itemStyle:{color:lateColor(s.late)}};}),
+    label:{show:true,position:'right',formatter:'{c}%',color:'#5F656B',fontFamily:MONO,fontSize:10}}]
+});
+
+var dashRfmData = ['1','2','3','5'].map(function(code){
+  var d = D.rfm.filter(function(x){return x.code===code;})[0];
+  return {code:code, name:rfmNames[code], value:d?d.share:0};
+});
+init('dashRfm', {
+  animation:!reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:4,right:44,top:8,bottom:2,containLabel:true},
+  tooltip:tip({trigger:'item',formatter:function(p){
+    var d = D.rfm.filter(function(x){return x.code===p.data.code;})[0];
+    return '<b>'+p.name+'</b><br>客户 '+fmt(d.customers)+' 人<br>收入 R$ '+fmt(Math.round(d.revenue))+'<br>占比 '+pct(d.share)+'%';
+  }}),
+  xAxis:{type:'value',max:50,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,formatter:'{value}%'},splitLine:{lineStyle:{color:'#EEF1F3'}},axisLine:{show:false}},
+  yAxis:{type:'category',inverse:true,data:['核心高价值','高价值流失风险','新客或潜力','一般成长'],axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#232527',fontSize:10}},
+  series:[{type:'bar',barWidth:'52%',data:dashRfmData.map(function(d){return {value:d.value,code:d.code,itemStyle:{color:rfmColors[d.code]}};}),
+    label:{show:true,position:'right',formatter:'{c}%',color:'#5F656B',fontFamily:MONO,fontSize:10}}]
+});
+
+/* gauge */
+init('gaugeBad', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  series:[{
+    type:'gauge', min:0, max:30, startAngle:210, endAngle:-30,
+    center:['50%','60%'], radius:'94%',
+    axisLine:{lineStyle:{width:12,color:[[10/30,C.cobalt],[15/30,C.amber],[1,C.red]]}},
+    pointer:{width:3,length:'56%',itemStyle:{color:'#101113'}},
+    axisTick:{distance:-16,length:4,lineStyle:{color:'#FFFFFF',width:1}},
+    splitLine:{distance:-16,length:12,lineStyle:{color:'#FFFFFF',width:2}},
+    axisLabel:{distance:-38,color:'#5F656B',fontSize:10,fontFamily:MONO,formatter:function(v){return v%5===0?v:'';}},
+    detail:{valueAnimation:!reduce,offsetCenter:[0,'44%'],fontSize:26,fontWeight:600,color:'#101113',formatter:'{value}%'},
+    data:[{value:12.81}]
+  }]
+});
+
+/* delay */
+var delayNames = ['准时','延迟 1–3 天','延迟 4–7 天','延迟 ≥7 天'];
+init('delayChart', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:8,right:16,top:48,bottom:8,containLabel:true},
+  tooltip:tip({trigger:'axis',axisPointer:{type:'shadow'},formatter:function(ps){
+    var d = D.delay[ps[0].dataIndex];
+    return '<b>'+delayNames[ps[0].dataIndex]+'</b><br>订单 '+fmt(d.orders)+' 笔 · 有评价 '+fmt(d.reviewed)+
+      '<br>差评率 '+pct(d.bad)+'% · 平均评分 '+d.score.toFixed(2);
+  }}),
+  legend:{right:0,top:0,itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:12},
+    data:[{name:'差评率',icon:'rect'},{name:'平均评分',icon:'circle'}]},
+  xAxis:{type:'category',data:delayNames,axisLabel:{color:'#232527',fontSize:12,interval:0},axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false}},
+  yAxis:[
+    monoAxis({type:'value',name:'差评率 %',nameTextStyle:{color:'#5F656B',fontSize:10,fontFamily:MONO},max:100,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:11,formatter:'{value}%'}}),
+    monoAxis({type:'value',name:'平均评分',nameTextStyle:{color:'#5F656B',fontSize:10,fontFamily:MONO},min:0,max:5,splitLine:{show:false},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:11}})
+  ],
+  series:[
+    {name:'差评率',type:'bar',barWidth:'44%',data:D.delay.map(function(d){return d.bad;}),
+      itemStyle:{color:C.cobalt},label:{show:true,position:'top',formatter:'{c}%',color:'#5F656B',fontFamily:MONO,fontSize:11}},
+    {name:'平均评分',type:'line',yAxisIndex:1,data:D.delay.map(function(d){return d.score;}),symbolSize:7,
+      lineStyle:{width:2,color:C.red},itemStyle:{color:C.red}}
+  ]
+});
+
+/* monthly */
+var mm = D.monthly.map(function(m){return m.m;});
+init('monthlyChart', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:8,right:14,top:46,bottom:54,containLabel:true},
+  tooltip:tip({trigger:'axis',axisPointer:{type:'line',lineStyle:{color:'#8A9299',type:'dashed'}},formatter:function(ps){
+    var d = D.monthly[ps[0].dataIndex];
+    return '<b>'+d.m+'</b><br>收入 R$ '+fmt(Math.round(d.revenue))+
+      '<br>有效订单 '+fmt(d.orders)+' 笔<br>延迟率 '+pct(d.late)+'% · 差评率 '+pct(d.bad)+'%'+
+      '<br>平均履约 '+d.days.toFixed(2)+' 天 · 评分 '+d.score.toFixed(2);
+  }}),
+  legend:{right:0,top:0,itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:12}},
+  xAxis:{type:'category',data:mm,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,interval:2},axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false}},
+  yAxis:[
+    monoAxis({type:'value',name:'收入 · 万雷亚尔',nameTextStyle:{color:'#5F656B',fontSize:10,fontFamily:MONO},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:function(v){return (v/10000).toFixed(0)+'万';}}}),
+    monoAxis({type:'value',name:'',min:0,max:function(v){return Math.ceil(v.max*1.2);},splitLine:{show:false},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}})
+  ],
+  dataZoom:[
+    {type:'inside',xAxisIndex:0,start:0,end:100},
+    {type:'slider',xAxisIndex:0,start:0,end:100,height:18,bottom:8,borderColor:'#D3D7DB',fillerColor:'rgba(31,59,255,.08)',
+      handleStyle:{color:'#FFFFFF',borderColor:'#1F3BFF'},moveHandleStyle:{color:'#1F3BFF'},textStyle:{color:'#5F656B',fontFamily:MONO,fontSize:10},dataBackground:{lineStyle:{color:'#B9C0C6'},areaStyle:{color:'#EDF1FF'}}}
+  ],
+  series:[
+    {name:'收入',type:'line',smooth:false,symbol:'none',data:D.monthly.map(function(m){return m.revenue;}),
+      lineStyle:{width:2,color:C.cobalt},areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(31,59,255,.20)'},{offset:1,color:'rgba(31,59,255,0)'}])}},
+    {name:'延迟率',type:'line',yAxisIndex:1,symbol:'circle',symbolSize:5,data:D.monthly.map(function(m){return m.late;}),
+      lineStyle:{width:2,color:C.red},itemStyle:{color:C.red},
+      markLine:{silent:true,symbol:'none',lineStyle:{color:'#8A9299',type:'dashed',width:1},label:{formatter:'全站 6.77%',color:'#5F656B',fontSize:10,position:'insideEndTop'},data:[{yAxis:6.77}]}},
+    {name:'差评率',type:'line',yAxisIndex:1,symbol:'circle',symbolSize:4,data:D.monthly.map(function(m){return m.bad;}),
+      lineStyle:{width:1.5,color:C.slate,type:'dashed'},itemStyle:{color:C.slate}}
+  ]
+});
+
+/* heatmap */
+if(D.daily && D.daily.length){
+  init('heatChart', {
+    animation: !reduce,
+    textStyle:{fontFamily:SANS},
+    tooltip:tip({trigger:'item',formatter:function(p){return '<b>'+p.data[0]+'</b><br>有效订单 '+fmt(p.data[1])+' 笔';}}),
+    calendar:{
+      range:['2017-01-01','2018-08-31'], left:44, right:16, top:28, bottom:42,
+      cellSize:['auto',13], splitLine:{show:false}, itemStyle:{borderWidth:2,borderColor:'#FFFFFF'},
+      dayLabel:{firstDay:1,nameMap:['日','一','二','三','四','五','六'],color:'#5F656B',fontFamily:MONO,fontSize:10},
+      monthLabel:{nameMap:'cn',color:'#5F656B',fontFamily:MONO,fontSize:10},
+      yearLabel:{show:false}
+    },
+    visualMap:{type:'piecewise',orient:'horizontal',left:'center',bottom:0,itemWidth:11,itemHeight:11,
+      textStyle:{color:'#5F656B',fontFamily:MONO,fontSize:10},
+      pieces:[
+        {min:350,label:'350+',color:'#1F3BFF'},
+        {min:220,max:349,label:'220–349',color:'#4A66FF'},
+        {min:150,max:219,label:'150–219',color:'#8FA2FF'},
+        {min:80,max:149,label:'80–149',color:'#C9D3FF'},
+        {max:79,label:'<80',color:'#EDF1FF'}
+      ]},
+    series:[{type:'heatmap',coordinateSystem:'calendar',data:D.daily}]
+  });
+}
+
+/* state bar + linked line */
+var stateChart = init('stateChart', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:8,right:74,top:8,bottom:8,containLabel:true},
+  tooltip:tip({trigger:'item',formatter:function(p){
+    var s = D.states[p.dataIndex];
+    return '<b>'+s.s+' '+ST[s.s]+'</b><br>有效订单 '+fmt(s.orders)+
+      '<br>延迟率 '+pct(s.late)+'% · 准时率 '+pct(s.onTime)+'%'+
+      '<br>平均履约 '+s.days.toFixed(2)+' 天<br>差评率 '+pct(s.bad)+'%';
+  }}),
+  xAxis:monoAxis({type:'value',axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:function(v){return (v/10000).toFixed(1)+'万';}}}),
+  yAxis:{type:'category',inverse:true,data:D.states.map(function(s){return s.s + ' ' + ST[s.s];}),
+    axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#232527',fontFamily:MONO,fontSize:11}},
+  series:[{type:'bar',barWidth:'58%',data:D.states.map(function(s){
+      return {value:s.orders,itemStyle:{color:lateColor(s.late)}};
+    }),
+    label:{show:true,position:'right',fontFamily:MONO,fontSize:10,color:'#5F656B',formatter:function(p){return fmt(p.value);}}}
+  ]
+});
+
+var stateLineChart = null;
+function stateSeries(s){
+  var map = {};
+  (D.stateMonthly[s]||[]).forEach(function(row){ map[row[0]] = row[1]; });
+  return mm.map(function(m){ return map[m] === undefined ? null : map[m]; });
+}
+function selectState(s){
+  if(!stateLineChart) return;
+  stateLineChart.setOption({series:[{data:stateSeries(s)}]});
+  var t = document.getElementById('stateLineTitle');
+  if(t) t.textContent = s + ' ' + ST[s] + ' · 月度延迟率';
+}
+stateLineChart = init('stateLine', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:8,right:12,top:18,bottom:12,containLabel:true},
+  tooltip:tip({trigger:'axis',formatter:function(ps){
+    var v = ps[0].value;
+    return '<b>'+ps[0].axisValue+'</b><br>延迟率 '+(v===null||v===undefined?'无数据':pct(v)+'%');
+  }}),
+  xAxis:{type:'category',data:mm,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:9,interval:3},axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false}},
+  yAxis:monoAxis({type:'value',axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}}),
+  series:[{type:'line',data:stateSeries('SP'),connectNulls:false,symbol:'circle',symbolSize:4,
+    lineStyle:{width:2,color:C.cobalt},itemStyle:{color:C.cobalt},
+    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(31,59,255,.14)'},{offset:1,color:'rgba(31,59,255,0)'}])},
+    markLine:{silent:true,symbol:'none',lineStyle:{color:'#8A9299',type:'dashed',width:1},label:{formatter:'6.77%',color:'#5F656B',fontSize:10,position:'insideEndTop'},data:[{yAxis:6.77}]}}]
+});
+if(stateChart){ stateChart.on('click', function(p){ selectState(p.name.split(' ')[0]); }); }
+
+/* radar */
+function pickState(code){
+  var hit = D.states.filter(function(s){return s.s===code;})[0];
+  if(!hit) hit = (D.stateExtra||[]).filter(function(s){return s.s===code;})[0];
+  return hit;
+}
+var sp = pickState('SP');
+var al = pickState('AL');
+function radarVals(s){
+  return [
+    s.onTime,
+    Math.max(0, 100*(1 - s.days/30)),
+    Math.max(0, 100*(1 - s.bad/30)),
+    100*Math.log10(s.orders)/Math.log10(41125)
+  ];
+}
+if(sp && al){
+  init('radarChart', {
+    animation: !reduce,
+    textStyle:{fontFamily:SANS},
+    tooltip:tip({trigger:'item'}),
+    legend:{bottom:0,itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:12},data:['SP 圣保罗','AL 阿拉戈斯']},
+    radar:{center:['50%','46%'],radius:'66%',
+      indicator:[{name:'准时率',max:100},{name:'履约速度',max:100},{name:'评价表现',max:100},{name:'订单规模',max:100}],
+      axisName:{color:'#5F656B',fontSize:11},
+      splitLine:{lineStyle:{color:'#E7EAED'}},splitArea:{areaStyle:{color:['#FFFFFF','#FAFBFC']}},
+      axisLine:{lineStyle:{color:'#E7EAED'}}},
+    series:[{type:'radar',symbolSize:4,
+      data:[
+        {name:'SP 圣保罗',value:radarVals(sp),lineStyle:{color:C.cobalt,width:2},itemStyle:{color:C.cobalt},areaStyle:{color:'rgba(31,59,255,.16)'}},
+        {name:'AL 阿拉戈斯',value:radarVals(al),lineStyle:{color:C.red,width:2},itemStyle:{color:C.red},areaStyle:{color:'rgba(194,65,44,.16)'}}
+      ]}]
+  });
+}
+
+/* freight */
+init('freightChart', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:8,right:14,top:46,bottom:8,containLabel:true},
+  tooltip:tip({trigger:'axis',formatter:function(ps){
+    var d = D.freight[ps[0].dataIndex];
+    return '<b>'+['免运费','低运费','中运费','高运费'][ps[0].dataIndex]+'</b><br>订单 '+fmt(d.orders)+
+      '<br>延迟率 '+pct(d.late)+'% · 差评率 '+pct(d.bad)+'%<br>平均履约 '+d.days.toFixed(2)+' 天';
+  }}),
+  legend:{right:0,top:0,itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:12}},
+  xAxis:{type:'category',data:['免运费','低运费','中运费','高运费'],axisLabel:{color:'#232527',fontSize:12},axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false}},
+  yAxis:[
+    monoAxis({type:'value',name:'比例 %',nameTextStyle:{color:'#5F656B',fontSize:10,fontFamily:MONO},max:25,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}}),
+    monoAxis({type:'value',name:'',min:0,max:20,splitLine:{show:false},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10}})
+  ],
+  series:[
+    {name:'延迟率',type:'bar',barWidth:'30%',data:D.freight.map(function(d){return d.late;}),itemStyle:{color:C.cobalt}},
+    {name:'差评率',type:'bar',barWidth:'30%',data:D.freight.map(function(d){return d.bad;}),itemStyle:{color:C.red}},
+    {name:'平均履约',type:'line',yAxisIndex:1,data:D.freight.map(function(d){return d.days;}),symbolSize:6,
+      lineStyle:{width:2,color:C.slate},itemStyle:{color:C.slate}}
+  ]
+});
+
+/* rfm donut */
+var rfmOrder = ['5','3','2','1','4'];
+var rfmData = rfmOrder.map(function(code){
+  var d = D.rfm.filter(function(x){return x.code===code;})[0];
+  return {name:rfmNames[code],value:d?d.share:0,itemStyle:{color:rfmColors[code]},code:code};
+});
+init('rfmChart', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  tooltip:tip({trigger:'item',formatter:function(p){
+    var d = D.rfm.filter(function(x){return x.code===p.data.code;})[0];
+    return '<b>'+p.name+'</b><br>客户 '+fmt(d.customers)+' 人<br>收入 R$ '+fmt(Math.round(d.revenue))+
+      '<br>占比 '+pct(d.share)+'%';
+  }}),
+  legend:{orient:'vertical',right:0,top:'middle',itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:11},
+    formatter:function(name){
+      var item = rfmData.filter(function(d){return d.name===name;})[0];
+      return name + '  ' + (item ? item.value.toFixed(2) : '0.00') + '%';
+    }},
+  graphic:[],
+  series:[{type:'pie',radius:['44%','66%'],center:['34%','52%'],
+    avoidLabelOverlap:true,minAngle:0,labelLayout:{hideOverlap:true},
+    label:{formatter:function(p){ return p.value >= 3 ? p.value.toFixed(2)+'%' : ''; },color:'#5F656B',fontSize:11},
+    labelLine:{length:8,length2:10,lineStyle:{color:'#C2C8CE'}},
+    emphasis:{scale:true,scaleSize:8,itemStyle:{shadowBlur:14,shadowColor:'rgba(16,17,19,.14)'}},
+    data:rfmData}]
+});
+
+/* contribution */
+init('contribChart', {
+  animation: !reduce,
+  textStyle:{fontFamily:SANS},
+  grid:{left:8,right:66,top:36,bottom:8,containLabel:true},
+  tooltip:tip({trigger:'axis',formatter:function(ps){
+    var idx = ps[0].dataIndex, nw = D.contrib[0], od = D.contrib[1];
+    if(idx===0){
+      return '<b>订单占比</b><br>新客户 '+nw.orderShare.toFixed(2)+'% · '+fmt(nw.orders)+' 单<br>老客户 '+od.orderShare.toFixed(2)+'% · '+fmt(od.orders)+' 单';
+    }
+    return '<b>收入占比</b><br>新客户 '+nw.revShare.toFixed(2)+'% · 客单价 '+nw.aov.toFixed(2)+'<br>老客户 '+od.revShare.toFixed(2)+'% · 客单价 '+od.aov.toFixed(2);
+  }}),
+  legend:{right:0,top:0,itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:12}},
+  xAxis:monoAxis({type:'value',max:100,axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}}),
+  yAxis:{type:'category',data:['订单','收入'],axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#232527',fontSize:12}},
+  series:[
+    {name:'新客户',type:'bar',stack:'all',barWidth:'46%',data:[96.73,97.02],itemStyle:{color:C.cobalt},
+      label:{show:true,position:'inside',color:'#FFFFFF',fontFamily:MONO,fontSize:11,formatter:'{c}%'}},
+    {name:'老客户',type:'bar',stack:'all',barWidth:'46%',data:[3.27,2.98],itemStyle:{color:C.red},
+      label:{show:true,position:'right',color:C.red,fontFamily:MONO,fontSize:11,formatter:'{c}%'}}
+  ]
+});
+
+/* bar race */
+var raceMonths = D.catMonthly.months;
+var raceCats = D.catMonthly.cats;
+var raceSeries = D.catMonthly.series;
+var raceChart = null, raceTimer = null, raceIdx = 0;
+var monthLabel = document.getElementById('monthLabel');
+var raceBtn = document.getElementById('raceBtn');
+function raceFrame(i){
+  var arr = raceCats.map(function(c){ return {name:c, value:raceSeries[c][i]||0}; });
+  arr.sort(function(a,b){ return b.value - a.value; });
+  var top = arr.slice(0,8);
+  raceChart.setOption({
+    yAxis:{data:top.map(function(d){ return CAT[d.name]; })},
+    series:[{data:top.map(function(d){ return {value:d.value,itemStyle:{color:CATCOL[d.name]}}; })}]
+  });
+  if(monthLabel) monthLabel.textContent = raceMonths[i];
+}
+if(document.getElementById('raceChart')){
+  raceChart = init('raceChart', {
+    animationDuration:0, animationDurationUpdate:800, animationEasing:'cubicOut',
+    textStyle:{fontFamily:SANS},
+    grid:{left:8,right:96,top:8,bottom:8,containLabel:true},
+    xAxis:{type:'value',max:'dataMax',axisLine:{show:false},axisTick:{show:false},
+      splitLine:{lineStyle:{color:'#E7EAED'}},axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:11,formatter:function(v){return v>=10000?(v/10000).toFixed(0)+'万':v;}}},
+    yAxis:{type:'category',inverse:true,max:7,data:[],axisLine:{show:false},axisTick:{show:false},
+      axisLabel:{color:'#232527',fontSize:13.5,fontFamily:SANS},animationDuration:800,animationDurationUpdate:800},
+    series:[{type:'bar',barWidth:'55%',data:[],
+      label:{show:true,position:'right',formatter:function(p){return wan(p.value)+'万';},color:'#5F656B',fontFamily:MONO,fontSize:12},
+      itemStyle:{color:C.cobalt}}],
+    tooltip:tip({trigger:'item',formatter:function(p){return '<b>'+p.name+'</b><br>商品销售额 R$ '+fmt(Math.round(p.value));}})
+  });
+  raceFrame(0);
+  if(reduce){
+    raceFrame(raceMonths.length-1);
+    if(raceBtn) raceBtn.style.display='none';
+  } else {
+    var startRace = function(){
+      if(raceTimer) return;
+      if(raceIdx >= raceMonths.length-1) raceIdx = 0;
+      if(raceBtn) raceBtn.textContent='暂停';
+      raceFrame(raceIdx);
+      raceTimer = setInterval(function(){
+        if(raceIdx >= raceMonths.length-1){
+          clearInterval(raceTimer); raceTimer=null;
+          if(raceBtn) raceBtn.textContent='重播';
+          return;
+        }
+        raceIdx++; raceFrame(raceIdx);
+      },900);
+    };
+    var stopRace = function(){
+      clearInterval(raceTimer); raceTimer=null;
+      if(raceBtn) raceBtn.textContent='播放';
+    };
+    if(raceBtn){
+      raceBtn.addEventListener('click', function(){ if(raceTimer) stopRace(); else startRace(); });
+    }
+    if(window.ScrollTrigger){
+      ScrollTrigger.create({trigger:'#raceChart',start:'top 85%',onEnter:function(){ if(!raceTimer) startRace(); }});
+    }
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(en){
+        en.forEach(function(e){ if(e.isIntersecting){ startRace(); io.disconnect(); } });
+      },{threshold:0.35});
+      io.observe(document.getElementById('raceChart'));
+    } else { startRace(); }
+  }
+}
+
+/* chapter progress */
+var PROG = {
+  map: {
+    s1:{g:0,label:'01 背景与数据来源'},
+    s2:{g:0,label:'02 数据总览'},
+    s3:{g:0,label:'03 分析口径'},
+    s4:{g:1,label:'04 履约与评价'},
+    s5:{g:2,label:'05 地区与卖家'},
+    s6:{g:3,label:'06 运费与客户'},
+    s7:{g:4,label:'07 商品与品类'},
+    s8:{g:4,label:'08 结论与建议'}
+  },
+  groups: [
+    {start:'s1',end:'s4'},
+    {start:'s4',end:'s5'},
+    {start:'s5',end:'s6'},
+    {start:'s6',end:'s7'},
+    {start:'s7',end:'s8'}
+  ],
+  dots: Array.prototype.slice.call(document.querySelectorAll('.pdot')),
+  track: document.getElementById('ptrack'),
+  fill: document.getElementById('pfill'),
+  label: document.getElementById('pcurrent')
+};
+
+function setSection(id){
+  var info = PROG.map[id];
+  if(!info) return;
+  if(PROG.label) PROG.label.textContent = info.label;
+  PROG.dots.forEach(function(d,i){
+    d.classList.toggle('on', i===info.g);
+    d.classList.toggle('done', i<=info.g);
+  });
+  document.querySelectorAll('.rail span').forEach(function(s){
+    s.classList.toggle('on', s.getAttribute('data-for')===id);
+  });
+}
+
+function currentSection(){
+  var band = window.innerHeight * 0.45;
+  var cur = null;
+  Object.keys(PROG.map).forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var r = el.getBoundingClientRect();
+    if(r.top <= band && r.bottom > band) cur = id;
+  });
+  return cur;
+}
+
+var lastSec = 's1';
+function syncSection(){
+  var cur = currentSection();
+  if(cur && cur !== lastSec){ lastSec = cur; setSection(cur); }
+}
+
+if('IntersectionObserver' in window){
+  setSection('s1');
+  var pio = new IntersectionObserver(function(){
+    syncSection();
+  }, {rootMargin:'-40% 0px -55% 0px', threshold:0});
+  Object.keys(PROG.map).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) pio.observe(el);
+  });
+  setTimeout(function(){ syncSection(); }, 400);
+} else {
+  window.addEventListener('scroll', syncSection, {passive:true});
+}
+
+var progQueued = false;
+function updateProgress(){
+  progQueued = false;
+  if(!PROG.track || !PROG.fill) return;
+  var W = PROG.track.clientWidth, pad = 6, n = PROG.dots.length;
+  if(!n) return;
+  var step = (W - 2*pad) / (n - 1);
+  var centers = [];
+  for(var i=0;i<n;i++) centers.push(pad + i*step);
+  var ref = window.scrollY + window.innerHeight * 0.45;
+  var gi = 0, frac = 0;
+  for(var k=0;k<PROG.groups.length;k++){
+    var a = document.getElementById(PROG.groups[k].start);
+    var b = document.getElementById(PROG.groups[k].end);
+    if(!a || !b) continue;
+    var at = a.getBoundingClientRect().top + window.scrollY;
+    var bt = b.getBoundingClientRect().top + window.scrollY;
+    if(ref < at){ gi = Math.max(0, k-1); frac = (k===0 ? 0 : 1); break; }
+    if(ref < bt){ gi = k; frac = (bt - at) ? (ref - at)/(bt - at) : 0; break; }
+    gi = k; frac = 1;
+  }
+  var px = (gi >= n-1) ? centers[n-1] : centers[gi] + frac*(centers[gi+1]-centers[gi]);
+  PROG.fill.style.width = Math.max(0, px - pad) + 'px';
+}
+function queueProgress(){ if(!progQueued){ progQueued = true; requestAnimationFrame(updateProgress); } }
+window.addEventListener('scroll', function(){ queueProgress(); syncSection(); }, {passive:true});
+window.addEventListener('resize', function(){ queueProgress(); syncSection(); });
+setTimeout(function(){ updateProgress(); syncSection(); }, 300);
+
+/* glow coordinates */
+var glowSel = '.kpi,.statcard,.concl>div,.actions>div';
+document.addEventListener('pointermove', function(e){
+  var el = e.target && e.target.closest ? e.target.closest(glowSel) : null;
+  if(!el) return;
+  var r = el.getBoundingClientRect();
+  var sx = r.width / (el.offsetWidth || r.width);
+  var sy = r.height / (el.offsetHeight || r.height);
+  el.style.setProperty('--mx', ((e.clientX - r.left)/sx) + 'px');
+  el.style.setProperty('--my', ((e.clientY - r.top)/sy) + 'px');
+}, {passive:true});
+
+window.addEventListener('resize', function(){ charts.forEach(function(c){ c.resize(); }); });
+setTimeout(function(){ charts.forEach(function(c){ c.resize(); }); }, 300);
+})();
+
+</script>
+</body>
+</html>
