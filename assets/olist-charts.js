@@ -111,19 +111,22 @@
 
   function rfm(){
     var order=['5','3','2','1','4'];
+    var narrow=window.innerWidth<700;
     var data=order.map(function(code){
       var d=D.rfm.filter(function(x){return x.code===code;})[0];
       return {name:rfmNames[code],value:d?d.share:0,itemStyle:{color:rfmColors[code]},code:code};
     });
+    var legendFmt=function(name){var it=data.filter(function(d){return d.name===name;})[0];return name+'  '+(it?it.value.toFixed(2):'0.00')+'%';};
     return {
       animation:!REDUCE, textStyle:{fontFamily:SANS},
       tooltip:tip({trigger:'item',formatter:function(p){
         var d=D.rfm.filter(function(x){return x.code===p.data.code;})[0];
         return '<b>'+p.name+'</b><br>客户 '+fmt(d.customers)+' 人<br>收入 R$ '+fmt(Math.round(d.revenue))+'<br>占比 '+pct(d.share)+'%';
       }}),
-      legend:{orient:'vertical',right:0,top:'middle',itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:11},
-        formatter:function(name){var it=data.filter(function(d){return d.name===name;})[0];return name+'  '+(it?it.value.toFixed(2):'0.00')+'%';}},
-      series:[{type:'pie',radius:['44%','70%'],center:['34%','50%'],avoidLabelOverlap:true,minAngle:0,labelLayout:{hideOverlap:true},
+      legend: narrow
+        ? {orient:'horizontal',left:'center',bottom:0,itemWidth:12,itemHeight:12,itemGap:8,textStyle:{color:'#5F656B',fontSize:12,fontWeight:500},formatter:legendFmt}
+        : {orient:'vertical',right:0,top:'middle',itemWidth:12,itemHeight:12,itemGap:8,textStyle:{color:'#5F656B',fontSize:13,fontWeight:500},formatter:legendFmt},
+      series:[{type:'pie',radius:narrow?['38%','56%']:['44%','70%'],center:narrow?['50%','42%']:['34%','50%'],avoidLabelOverlap:true,minAngle:0,labelLayout:{hideOverlap:true},
         label:{formatter:function(p){return p.value>=3?p.value.toFixed(2)+'%':'';},color:'#5F656B',fontSize:11},
         labelLine:{length:8,length2:10,lineStyle:{color:'#C2C8CE'}},
         emphasis:{scale:true,scaleSize:8,itemStyle:{shadowBlur:14,shadowColor:'rgba(16,17,19,.14)'}},data:data}]
@@ -134,7 +137,8 @@
     var months=D.catMonthly.months, cats=D.catMonthly.cats, series=D.catMonthly.series;
     return {
       animationDuration:0, animationDurationUpdate:800, animationEasing:'cubicOut', textStyle:{fontFamily:SANS},
-      grid:{left:8,right:96,top:8,bottom:8,containLabel:true},
+      title:{text:months[0],left:'center',top:0,textStyle:{color:'#6C4DFF',fontFamily:MONO,fontSize:17,fontWeight:500}},
+      grid:{left:8,right:96,top:42,bottom:8,containLabel:true},
       xAxis:{type:'value',max:'dataMax',axisLine:{show:false},axisTick:{show:false},splitLine:{lineStyle:{color:'#E7EAED'}},
         axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:function(v){return v>=10000?(v/10000).toFixed(1)+'万':v;}}},
       yAxis:{type:'category',inverse:true,max:7,data:[],axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#232527',fontSize:13,fontFamily:SANS},animationDuration:800,animationDurationUpdate:800},
@@ -433,13 +437,13 @@
         var arr=cats.map(function(c){return {name:c,value:series[c][i]||0};});
         arr.sort(function(a,b){return b.value-a.value;});
         var top=arr.slice(0,8);
-        ch.setOption({yAxis:{data:top.map(function(d){return CAT[d.name];})},series:[{data:top.map(function(d){return {value:d.value,itemStyle:{color:CATCOL[d.name]}};})}]});
+        ch.setOption({title:{text:months[i]},yAxis:{data:top.map(function(d){return CAT[d.name];})},series:[{data:top.map(function(d){return {value:d.value,itemStyle:{color:CATCOL[d.name]}};})}]});
       }
       frame(0);
       if(!REDUCE){
         TIMERS[id]=setInterval(function(){
-          if(idx>=months.length-1){ clearInterval(TIMERS[id]); delete TIMERS[id]; return; }
-          idx++; frame(idx);
+          idx=(idx+1)%months.length;
+          frame(idx);
         },900);
       }
     }
