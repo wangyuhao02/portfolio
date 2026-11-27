@@ -23,7 +23,9 @@ tabs 里每个页签的 blocks 支持以下类型：
 - {type:'image', src:'assets/shots/x.png', alt:'…', caption:'…'}
 - {type:'chart', id:'olistMonthly', title:'…', sub:'…', caption:'…', cls:'chart--tall'}
 - {type:'note', text:'…'}                     紫色提示条
-- {type:'link', href:'…', label:'…'}          外部/完整版链接
+- {type:'link', href:'files/xxx.pdf', label:'…'}   文字版 PDF / 外部链接（新标签打开）
+  PDF 放在根目录 files/，文件名用英文短名（如 qidian-industry.pdf、garena-market.pdf、internet.pdf）。
+  三份新个人项目按页签各挂对应报告；旧项目只在概览挂一份正文+参考文献版；甘肃不放。
 
 四、图片
 - 放在 assets/shots/，用相对路径引用，例如 assets/shots/new-project.png。
