@@ -285,6 +285,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .rfm-center b{display:block;font-size:13.5px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
 .rfm-center small{display:block;font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px;white-space:nowrap}
 .full-link{display:inline-flex;align-items:center;gap:8px;margin-top:18px;border-bottom:1px solid var(--purple);padding-bottom:3px;color:var(--purple);font-size:13px}
+.project-content>.full-link{position:relative;overflow:hidden;display:flex;align-items:center;width:fit-content;max-width:100%;margin-top:14px;padding:10px 16px;border:1px solid rgba(108,77,255,.26);border-radius:12px;background:rgba(108,77,255,.05);font-weight:500;transition:background .25s,border-color .25s,transform .25s}
+.project-content>.full-link:hover{background:rgba(108,77,255,.1);border-color:rgba(108,77,255,.5);transform:translateY(-1px)}
+.project-content>.full-link:active{transform:scale(.96)}
 .empty{padding:60px 0;text-align:center;color:var(--muted)}
 .empty b{display:block;font-size:1.3rem;color:var(--ink);margin-bottom:8px}
 
