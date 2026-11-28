@@ -5,15 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>王昱昊个人作品集</title>
 <meta name="description" content="王昱昊个人作品集：行业与商业分析、市场用户调研、数据分析与战略政策研究。">
-<meta property="og:title" content="王昱昊个人作品集">
-<meta property="og:description" content="8 个作品，覆盖行业与商业分析、市场用户调研、数据分析、战略与政策研究。">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://wangyuhao02.github.io/portfolio/">
-<meta property="og:image" content="https://wangyuhao02.github.io/portfolio/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://wangyuhao02.github.io/portfolio/">
 <meta name="theme-color" content="#F7F7F9">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%236C4DFF'/%3E%3Cpath d='M7 9l4.5 15L16 13l4.5 11L25 9' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3C/svg%3E">
 <style>
@@ -251,6 +242,14 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .caption b{font-family:var(--mono);font-size:10.5px;color:var(--ink);font-weight:500;margin-right:5px}
 .table-cap{font-size:14px;font-weight:600;line-height:1.6;color:var(--ink);margin:0 0 9px;text-align:center}
 .note{font-size:14px;line-height:1.8;color:var(--muted);background:var(--soft);border-left:2px solid var(--purple);padding:10px 14px;margin:18px 0}
+.logic{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:20px 0 24px;padding:14px 16px;border:1px solid var(--purple3);border-radius:12px;
+  background:linear-gradient(135deg,rgba(108,77,255,.06),rgba(255,255,255,.55))}
+.logic-tag{flex:0 0 auto;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--purple);padding-top:5px}
+.logic ol{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;margin:0;padding:0;list-style:none}
+.logic li{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:1.5;color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:8px;padding:4px 9px}
+.logic li i{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--purple)}
+.logic li+li{margin-left:15px}
+.logic li+li::before{content:"→";position:absolute;left:-15px;top:50%;transform:translateY(-50%);color:var(--purple2);font-size:12px;line-height:1}
 .pairs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 0}
 .pair{background:#fff;border:1px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:11px}
 .pair-risk b{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--purple);font-weight:600;margin-bottom:6px}
@@ -281,6 +280,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .chart--mdCompare{height:280px}
 .chart--mdPollutants{height:340px}
 .chart--mdForecast{height:300px}
+.chart--catMix{height:260px}
+.chart--catTrend{height:340px}
+.chart--catRisk{height:400px}
 .rfm-center{position:absolute;left:34%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
 .rfm-center b{display:block;font-size:13.5px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
 .rfm-center small{display:block;font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px;white-space:nowrap}
@@ -396,6 +398,11 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   .project-head h1{font-size:2rem}
   .project-tabs button{font-size:12.5px;padding:7px 11px}
   .project-switch::before{display:none}
+  .logic{gap:8px;padding:12px 13px}
+  .logic-tag{flex-basis:100%;padding-top:0}
+  .logic li{font-size:12px;padding:3px 7px}
+  .logic li+li{margin-left:13px}
+  .logic li+li::before{left:-13px;font-size:11px}
   .about-view .wrap{overflow:auto}
 }
 @media (max-width:560px){

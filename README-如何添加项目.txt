@@ -23,16 +23,17 @@ tabs 里每个页签的 blocks 支持以下类型：
 - {type:'image', src:'assets/shots/x.png', alt:'…', caption:'…'}
 - {type:'chart', id:'olistMonthly', title:'…', sub:'…', caption:'…', cls:'chart--tall'}
 - {type:'note', text:'…'}                     紫色提示条
+- {type:'logic', items:['第一步','第二步',…]}  概览里的逻辑主线（紫色描边胶囊 + 箭头，序号自动生成）
 - {type:'link', href:'files/xxx.pdf', label:'…'}   文字版 PDF / 外部链接（新标签打开）
   PDF 放在根目录 files/，文件名用英文短名（如 qidian-industry.pdf、garena-market.pdf、internet.pdf）。
-  三份新个人项目按页签各挂对应报告；旧项目只在概览挂一份正文+参考文献版；甘肃不放。
+  三份新个人项目按页签各挂对应报告；Olist 概览与品类页签另挂 olist-category.pdf；旧项目只在概览挂一份正文+参考文献版；甘肃不放。
 
 四、图片
 - 放在 assets/shots/，用相对路径引用，例如 assets/shots/new-project.png。
 - 首页循环作品带在 portfolio.js 顶部的 SHOTS 数组里维护，加一项 {src,label} 即可。
 
 五、图表
-- Olist 可用 id：olistMonthly、olistDelay、olistHeat、olistRfm、olistRace。
+- Olist 可用 id：olistMonthly、olistDelay、olistHeat、olistRfm、olistRace、olistCatMix、olistCatTrend、olistCatRisk。
 - 企点可用 id：qdCompete、qdCycles、qdWaterfall、qdLeaves。
 - 甘肃咨询可用 id：gsEnergy、gsMix、gsCarbon、gsIndustry。
 - 市调可用 id：svPref、svPotential；统计建模可用 id：mdCompare、mdPollutants、mdForecast。

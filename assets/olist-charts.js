@@ -413,6 +413,103 @@
     };
   }
 
+  function catMix(){
+    var rows=[
+      {name:'核心品类',v:54.48,n:10,sales:7309723,color:'#1F3BFF'},
+      {name:'风险品类',v:27.58,n:21,sales:3700662,color:'#C2412C'},
+      {name:'收缩/观察',v:15.19,n:18,sales:2038542,color:'#8A9299'},
+      {name:'增长品类',v:2.75,n:4,sales:369482,color:'#1E7B4F'}
+    ];
+    return {
+      animation:!REDUCE, textStyle:{fontFamily:SANS},
+      grid:{left:8,right:112,top:12,bottom:8,containLabel:true},
+      tooltip:tip({trigger:'item',formatter:function(p){var d=rows[p.dataIndex];
+        return '<b>'+d.name+'</b><br>销售额 R$ '+fmt(d.sales)+'<br>收入占比 '+d.v.toFixed(2)+'% · '+d.n+' 个品类';}}),
+      xAxis:{type:'value',min:0,max:60,axisLine:{show:false},axisTick:{show:false},splitLine:{lineStyle:{color:'#E7EAED'}},
+        axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}},
+      yAxis:{type:'category',inverse:true,data:rows.map(function(d){return d.name;}),axisLine:{show:false},axisTick:{show:false},
+        axisLabel:{color:'#232527',fontSize:13}},
+      series:[{type:'bar',barWidth:'46%',data:rows.map(function(d){return {value:d.v,itemStyle:{color:d.color,borderRadius:[0,5,5,0]}};}),
+        label:{show:true,position:'right',formatter:function(p){var d=rows[p.dataIndex];return d.v.toFixed(2)+'% · '+d.n+' 个';},color:'#5F656B',fontFamily:MONO,fontSize:11}}]
+    };
+  }
+
+  function catTrend(){
+    var months=['2017-01','2017-02','2017-03','2017-04','2017-05','2017-06','2017-07','2017-08','2017-09','2017-10','2017-11','2017-12','2018-01','2018-02','2018-03','2018-04','2018-05','2018-06','2018-07','2018-08'];
+    var series=[
+      {name:'健康美容',color:'#C2412C',w:2.6,data:[12561.32,22838.79,25927.35,22780.85,46786.02,31979.49,34770.22,49813.91,51537.65,41905.82,78976.65,61264.66,72190.49,86561.78,89759.44,91751.04,95950.68,107795.99,105517.68,120475.71]},
+      {name:'手表礼品',color:'#1F3BFF',w:2.2,data:[8086.52,11756.21,24970.38,23461.09,37804.00,28430.63,35604.66,36170.95,46986.85,65060.53,96575.58,71611.62,75552.24,62986.19,97861.08,92658.57,123872.66,86885.56,96212.59,72277.06]},
+      {name:'床品家纺',color:'#2E454E',w:1.9,data:[3960.16,16200.83,25773.02,24347.69,33318.55,35114.81,63838.85,57067.33,52473.20,46198.00,89172.65,50505.85,76281.90,60496.18,69256.39,72328.35,71664.93,71545.58,54904.92,61035.88]},
+      {name:'运动休闲',color:'#8A9299',w:1.8,data:[9717.62,16207.16,26849.49,24293.76,35793.50,32728.43,37344.43,41662.36,50059.50,49611.45,63730.92,59547.97,91368.43,75308.83,84654.27,67346.58,59599.12,45542.01,55172.78,51190.16]},
+      {name:'家具装饰',color:'#6E5BD6',w:2.1,data:[13521.31,20955.20,23402.64,21540.53,24028.51,16911.68,24751.92,35189.35,30758.70,30189.64,63011.03,32011.75,54821.79,38386.96,52134.24,56743.11,54056.05,42190.22,45659.39,41320.25]}
+    ];
+    return {
+      animation:!REDUCE, textStyle:{fontFamily:SANS},
+      legend:{type:'scroll',top:0,left:0,right:0,itemWidth:10,itemHeight:10,textStyle:{color:'#5F656B',fontSize:11.5}},
+      grid:{left:8,right:38,top:42,bottom:8,containLabel:true},
+      tooltip:tip({trigger:'axis',axisPointer:{type:'line',lineStyle:{color:'#8A9299',type:'dashed'}},formatter:function(ps){
+        return '<b>'+ps[0].axisValue+'</b>'+ps.map(function(p){
+          return '<br>'+p.marker+p.seriesName+' R$ '+fmt(Math.round(p.value));
+        }).join('');
+      }}),
+      xAxis:{type:'category',data:months,axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false},
+        axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,interval:2}},
+      yAxis:axis({type:'value',axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:function(v){return (v/10000).toFixed(0)+'万';}}}),
+      series:series.map(function(d){
+        return {name:d.name,type:'line',smooth:true,symbol:'circle',symbolSize:3,data:d.data,
+          lineStyle:{width:d.w,color:d.color},itemStyle:{color:d.color},emphasis:{focus:'series'}};
+      })
+    };
+  }
+
+  function catRisk(){
+    var rows=[
+      {n:'健康美容',v:[10.36,17.17,1255695.13],g:175.61},
+      {n:'家具装饰',v:[5.75,20.08,727465.05],g:392.05},
+      {n:'母婴用品',v:[6.92,14.87,410312.20],g:32.90},
+      {n:'办公家具',v:[7.23,26.26,273580.70],g:46.98},
+      {n:'乐器',v:[7.10,13.56,187788.44],g:52.02},
+      {n:'建筑施工工具',v:[5.84,20.85,144550.19],g:50.34},
+      {n:'家电',v:[9.47,13.30,110649.74],g:210.40},
+      {n:'农业与工商业用品',v:[2.66,18.01,72530.47],g:246.17},
+      {n:'客厅家具',v:[6.59,13.09,68638.56],g:37.23},
+      {n:'家居舒适用品',v:[8.29,18.43,58572.04],g:30.39},
+      {n:'固定电话及通讯',v:[5.29,18.57,57824.21],g:110.54},
+      {n:'空调',v:[2.75,17.55,54723.16],g:56.29},
+      {n:'音频设备',v:[10.52,19.33,50668.60],g:52.32},
+      {n:'烤箱与咖啡机等小家电',v:[4.44,18.82,47445.71],g:135.79},
+      {n:'照明工具',v:[13.05,18.04,40002.00],g:139.47},
+      {n:'安全防护用品',v:[1.82,27.66,39589.02],g:917.58},
+      {n:'食品',v:[6.37,10.83,29243.51],g:122.24},
+      {n:'安防与信号设备',v:[5.12,18.15,21509.23],g:73.97},
+      {n:'卧室家具',v:[6.98,14.41,20028.78],g:78.69},
+      {n:'技术类图书',v:[10.26,12.09,19096.06],g:33.88},
+      {n:'男装',v:[7.22,23.22,10748.82],g:53.54}
+    ];
+    var LBL={'健康美容':1,'家具装饰':1,'办公家具':1,'安全防护用品':1,'男装':1};
+    return {
+      animation:!REDUCE, textStyle:{fontFamily:SANS},
+      grid:{left:8,right:24,top:42,bottom:34,containLabel:true},
+      tooltip:tip({trigger:'item',formatter:function(p){var d=rows[p.dataIndex];
+        return '<b>'+d.n+'</b><br>销售额 R$ '+fmt(d.v[2])+'<br>延迟率 '+d.v[0].toFixed(2)+'% · 差评率 '+d.v[1].toFixed(2)+'%<br>平均月增长 '+d.g.toFixed(2)+'%';}}),
+      xAxis:{type:'value',min:0,max:14,interval:2,name:'延迟率 %',nameLocation:'middle',nameGap:26,
+        nameTextStyle:{color:'#5F656B',fontSize:10,fontFamily:MONO},
+        axisLine:{lineStyle:{color:'#D3D7DB'}},axisTick:{show:false},splitLine:{lineStyle:{color:'#E7EAED'}},
+        axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}},
+      yAxis:axis({type:'value',min:8,max:30,interval:4,name:'差评率 %',nameTextStyle:{color:'#5F656B',fontSize:10,fontFamily:MONO},
+        axisLabel:{color:'#5F656B',fontFamily:MONO,fontSize:10,formatter:'{value}%'}}),
+      series:[{type:'scatter',symbolSize:function(v){return Math.max(7,Math.min(44,Math.sqrt(v[2])/26));},
+        data:rows.map(function(d){return {name:d.n,value:d.v,itemStyle:{color:d.v[1]>=20?'#C2412C':d.v[1]>=15?'#D97A60':'#E8B4A6',opacity:.82}};}),
+        label:{show:true,position:'top',color:'#232527',fontSize:11,
+          formatter:function(p){return LBL[p.name]?p.name:'';}},
+        emphasis:{itemStyle:{opacity:1,borderColor:'#111015',borderWidth:1}},
+        markLine:{silent:true,symbol:'none',lineStyle:{color:'#8A9299',type:'dashed',width:1},
+          label:{show:false},
+          data:[{xAxis:6.77},{yAxis:12.81}]}
+      }]
+    };
+  }
+
   function init(id){
     if(CH[id] || !D || !window.echarts) return;
     var el=document.getElementById('chart-'+id);
@@ -447,6 +544,9 @@
         },900);
       }
     }
+    else if(id==='olistCatMix') ch.setOption(catMix());
+    else if(id==='olistCatTrend') ch.setOption(catTrend());
+    else if(id==='olistCatRisk') ch.setOption(catRisk());
     else if(id==='qdCompete') ch.setOption(qdCompete(el.clientWidth<560));
     else if(id==='qdCycles') ch.setOption(qdCycles());
     else if(id==='qdWaterfall') ch.setOption(qdWaterfall());
