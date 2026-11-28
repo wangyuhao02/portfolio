@@ -20,8 +20,8 @@
 
   var PROJECTS = {
     qidian: {
-      id:'qidian', section:'industry', short:'企点行业分析', title:'企业级 SaaS 行业分析与产品方案',
-      fullTitle:'企业级 SaaS 行业分析与产品方案——以腾讯企点为例', kind:'个人项目，以腾讯企点为例',
+      id:'qidian', section:'industry', short:'商业分析', title:'B端SaaS商业分析与客户经营方案',
+      fullTitle:'B端SaaS商业分析与客户经营方案——以腾讯企点为例', kind:'个人项目，以腾讯企点为例',
       client:'腾讯企点', year:'2026', tags:['行业研究','产品拆解','客户方案','经营指标'],
       summary:'以腾讯企点为对象完成四份材料：行业分析、产品能力拆解、客户方案与经营指标。行业判断只用公开资料，客户案例为示例画像，经营分析为可复现的模拟数据，四部分合成一条从行业判断到经营指标的链路。',
       metrics:[{v:'21.5%',l:'CDP 市场份额'},{v:'+36.7%',l:'同比增速'},{v:'4 份',l:'研究材料'}],
